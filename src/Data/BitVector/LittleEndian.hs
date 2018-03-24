@@ -598,7 +598,22 @@ isZeroVector = (0 ==) . nat
 subRange :: (Word, Word) -> BitVector -> BitVector
 subRange (!lower, !upper) (BV _ n)
   | lower > upper = zeroBits
-  | otherwise     = BV m $ (n `shiftR` i) `mod` 2^m
+  | otherwise     =
+    case toInt lower of
+      Nothing -> zeroBits
+      Just i  ->
+        case toInt upper of
+          Nothing ->
+            let m = maxBound - i + 1
+            in  BV m $  n `shiftR` i
+          Just j  ->
+            let m = j - i + 1
+            in  BV m $ (n `shiftR` i) `mod` (1 `shiftR` m)
+
+
+toInt :: Word -> Maybe Int
+toInt w
+  | w > maxInt = Nothing
+  | otherwise  = Just $ fromEnum w
   where
-    i = fromEnum lower
-    m = fromEnum $ upper - lower + 1
+    maxInt = toEnum (maxBound :: Int)

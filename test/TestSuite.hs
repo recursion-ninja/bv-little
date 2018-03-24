@@ -373,7 +373,7 @@ bitVectorProperties = testGroup "BitVector properties"
     , testProperty "toSignedNumber . fromNumber === id" bitVectorUnsignedNumIdentity
     , testProperty "isSigned == const False" noSignBitVector
     , testProperty "i >  j ==> subRange (i,j) === const zeroBits" badSubRangeEmptyResult
---    , testProperty "i <= j ==> dimension . subRange (i,j) === const (j - i)" subRangeFixedDimension
+    , testProperty "i <= j ==> dimension . subRange (i,j) === const (j - i)" subRangeFixedDimension
     ]
   where
     otoListTest :: BitVector -> Property
