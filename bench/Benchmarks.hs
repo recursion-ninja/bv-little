@@ -7,6 +7,7 @@ import Criterion.Main
 import Data.Bits
 import Data.BitVector.LittleEndian
 import Data.List (nubBy)
+import Data.Hashable
 import Data.Semigroup
 
 
@@ -15,11 +16,19 @@ main = defaultMain [ benchmarks ]
 
 benchmarks :: Benchmark
 benchmarks = bgroup "BitVector"
-    [ fromNumberBench
+    [ toBitsBench
+    , fromBitsBench
+    , fromNumberBench
+    , toSignedNumberBench
+    , toUnsignedNumberBench
+    , dimmensionBench
     , isZeroVectorBench
     , zeroPopCountBench
+    , subRangeBench
     , bitsBench
     , finiteBitsBench
+    , hashableBench
+    , semigroupBench
     ]
 
 
@@ -63,11 +72,39 @@ hugeNumber :: Integer
 hugeNumber  = 14142135623730950488016887242096980785696718753769480731766797379907324784621070388503875343276415727350138462309122970249248360558507372126441214970999358314132226659275055927557999505011527820605715
 
 
+toBitsBench :: Benchmark
+toBitsBench = unaryBenchmark "toBitsNumber" toBits
+
+
+fromBitsBench :: Benchmark
+fromBitsBench = constantNumberTimeBenchmark "fromBits" id g
+  where
+    g int n = let !bitCount = fromEnum $ logBase2Word int
+                  bitStream = force $ foldMap (\i -> [testBit n i]) [0 .. bitCount - 1]
+              in  fromBits bitStream
+
+
 fromNumberBench :: Benchmark
 fromNumberBench = constantNumberTimeBenchmark "fromNumber" id g
   where
     g int = let !bitCount = logBase2Word int
             in  fromNumber bitCount
+
+
+toSignedNumberBench :: Benchmark
+toSignedNumberBench = unaryBenchmark "toSignedNumber" (toSignedNumber :: BitVector -> Integer)
+
+
+toUnsignedNumberBench :: Benchmark
+toUnsignedNumberBench = unaryBenchmark "toUnsignedNumber" (toUnsignedNumber :: BitVector -> Integer)
+
+
+dimmensionBench :: Benchmark
+dimmensionBench = constantNumberTimeBenchmark "dimmension" id g
+  where
+    g int _ = let !bitCount  = logBase2Word int
+                  !bitVector = fromNumber bitCount int
+              in  dimension bitVector
   
 
 isZeroVectorBench :: Benchmark
@@ -84,6 +121,16 @@ zeroPopCountBench = constantNumberTimeBenchmark "popCount is zero" id g
     g int _ = let !bitCount  = logBase2Word int
                   !bitVector = fromNumber bitCount int
               in  ((0==) . popCount) bitVector
+  
+
+subRangeBench :: Benchmark
+subRangeBench = constantNumberTimeBenchmark "subRange" id g
+  where
+    g int _ = let !bitCount   = logBase2Word int
+                  !bitVector  = fromNumber bitCount int
+                  !lowerBound = bitCount `div` 4
+                  !upperBound = (bitCount * 3) `div` 4
+              in  (lowerBound, upperBound) `subRange` bitVector
   
 
 bitsBench :: Benchmark
@@ -116,6 +163,19 @@ finiteBitsBench = bgroup "FiniteBits"
     , unaryBenchmark "countTrailingZeros" countLeadingZeros
     ]
 
+
+hashableBench :: Benchmark
+hashableBench = bgroup "Hashable"
+    [ unaryBenchmark    "hash" hash
+    , indexingBenchmark "hashWithSalt" (flip hashWithSalt)
+    ]
+  
+
+semigroupBench :: Benchmark
+semigroupBench = bgroup "Semigroup"
+    [ binaryBenchmark "(<>)" (<>)
+    ]
+  
 
 constantNumberTimeBenchmark :: (NFData a, NFData b) => String -> (Integer -> a) -> (Integer -> a -> b) -> Benchmark
 constantNumberTimeBenchmark  label f g = bgroup label $ generateBenchmark <$> magicNumbers
@@ -180,101 +240,3 @@ magicNumbers =
     , ("large" ,  largeNumber)
     , ("huge"  ,   hugeNumber)
     ]
-
-{-
-invertBench :: Benchmark
-invertBench = bench "MutualExclusionSet invert is constant-time" $ whnf invert $ force (ofSize 50)
-
-
-isCoherentBench :: Benchmark
-isCoherentBench = bench "MutualExclusionSet isCoherent is constant-time" $ whnf isCoherent $ force (ofSize 50)
-
-
-isPermissibleBench :: Benchmark
-isPermissibleBench = linearBenchmark "MutualExclusionSet isPermissible log-access" (force . ofSize) (const isPermissible)
-
-
-isExcludedBench :: Benchmark
-isExcludedBench = logBenchmark "MutualExclusionSet isExcluded log-access" ofSize f
-  where
-    -- We negate i to consider both the included and excluded cases
-    f i xs = (i `isExcluded` xs) `seq` negate i `isExcluded` xs
-
-
-isIncludedBench :: Benchmark
-isIncludedBench = logBenchmark "MutualExclusionSet isIncluded log-access" ofSize f
-  where
-    -- We negate i to consider both the included and excluded cases
-    f i xs = (i `isIncluded` xs) `seq` negate i `isIncluded` xs
-
-
-excludedLookupBench :: Benchmark
-excludedLookupBench = logBenchmark "MutualExclusionSet excludedLookup log-access" ofSize f
-  where
-    -- We negate i to consider both the included and excluded cases
-    f i xs = (i `excludedLookup` xs) `seq` negate i `excludedLookup` xs
-
-
-includedLookupBench :: Benchmark
-includedLookupBench = logBenchmark "MutualExclusionSet includedLookup log-access" ofSize f
-  where
-    -- We negate i to consider both the included and excluded cases
-    f i xs = (i `includedLookup` xs) `seq` negate i `includedLookup` xs
-
-
-excludedSetBench :: Benchmark
-excludedSetBench = linearBenchmark "MutualExclusionSet excludedSet linear access" (force . ofSize) (const excludedSet)
-
-
-includedSetBench :: Benchmark
-includedSetBench = linearBenchmark "MutualExclusionSet includedSet linear access" (force . ofSize) (const includedSet)
-
-
-mutualExclusivePairsBench :: Benchmark
-mutualExclusivePairsBench = linearBenchmark "MutualExclusionSet mutuallyExclusivePairs linear access" (force . ofSize) (const mutuallyExclusivePairs)
-
-
-mergeBench :: Benchmark
-mergeBench = linearBenchmark2 "merge (<>) is linear" (force . ofSize) (force . ofSizeEven) (const (<>))
-
-
-linearBenchmark :: (NFData a, NFData b) => String -> (Int -> a) -> (Int -> a -> b) -> Benchmark
-linearBenchmark  label f g = bgroup label $ generateBenchmark <$> [0 .. 9]
-  where
-    generateBenchmark expVal = bench (show domainSize) $ nf app target
-      where
-        !target    = force $ f domainSize
-        !app       = g expVal
-        domainSize = 10 * (expVal + 1)
-    
-
-linearBenchmark2 :: (NFData a, NFData b, NFData c) => String -> (Int -> a) -> (Int -> b) -> (Int -> a -> b -> c) -> Benchmark
-linearBenchmark2  label f g h = bgroup label $ generateBenchmark <$> [0 .. 9]
-  where
-    generateBenchmark expVal = bench (show domainSize) $ nf app rhs
-      where
-        !lhs       = force $ f domainSize
-        !rhs       = force $ g domainSize
-        !app       = h expVal lhs
-        domainSize = 10 * (expVal + 1)
-    
-
-logBenchmark :: String -> (Int -> a) -> (Int -> a -> b) -> Benchmark
-logBenchmark label f g = bgroup label $ generateBenchmark <$> [0 .. 9]
-  where
-    generateBenchmark expVal = bench (show domainSize) $ whnf app target
-      where
-        !app       = g indexpValrod
-        !target    = f domainSize
-        indexpValrod  = product [1..expVal] `mod` domainSize
-        domainSize = 2 `shiftL` expVal
-
-
-ofSize :: Int -> MutualExclusionSet Int
-ofSize n = unsafeFromList $ (\x -> (x, negate x)) <$> [1..n]
-
-
-ofSizeEven :: Int -> MutualExclusionSet Int
-ofSizeEven n = unsafeFromList $ (\x -> (x, negate x)) <$> [2,4..2*n]
-
--}
