@@ -71,15 +71,16 @@ import GHC.Exts
 import GHC.Generics
 import GHC.Integer.GMP.Internals
 import GHC.Integer.Logarithms
-import Test.QuickCheck (Arbitrary(..), CoArbitrary(..), NonNegative(..), suchThat)
+import GHC.Natural
+import Test.QuickCheck (Arbitrary(..), CoArbitrary(..), NonNegative(..), suchThat, variant)
 
 
 -- |
 -- A little-endian bit vector of non-negative dimension.
 data  BitVector
     = BV
-    { dim :: {-# UNPACK #-} !Int -- ^ The /dimension/ of a bit vector.
-    , nat :: !Integer            -- ^ The value of a bit vector, as a natural number.
+    { dim :: {-# UNPACK #-} !Word -- ^ The /dimension/ of a bit vector.
+    , nat :: !Natural             -- ^ The value of a bit vector, as a natural number.
     } deriving ( Data
                , Generic
                , Typeable
@@ -98,8 +99,8 @@ instance Arbitrary BitVector where
     arbitrary = do
         dimVal <- getNonNegative <$> arbitrary
         let upperBound = 2^dimVal
-        intVal <- (getNonNegative <$> arbitrary) `suchThat` (< upperBound)
-        pure $ BV dimVal intVal
+        natVal <- (getNonNegative <$> arbitrary) `suchThat` (< upperBound)
+        pure . BV (toEnum dimVal) $ naturalFromInteger natVal
 
 
 -- |
@@ -122,12 +123,12 @@ instance Bits BitVector where
     zeroBits = BV 0 0
 
     {-# INLINE bit #-}
-    bit i = BV (i+1) (2^i)
+    bit i = BV (succ $ toEnum i) (2^i)
 
     {-# INLINE clearBit #-}
     clearBit bv@(BV w n) i
-      | i < 0 || i >= w = bv
-      | otherwise       = BV w $ n `clearBit` i
+      | i < 0 || toEnum i >= w = bv
+      | otherwise = BV w $ n `clearBit` i
 
 {-
     {-# INLINE setBit #-}
@@ -137,49 +138,53 @@ instance Bits BitVector where
 -}
 
     {-# INLINE testBit #-}
-    testBit (BV w n) i = i >= 0 && i < w && n `testBit` i
+    testBit (BV w n) i = i >= 0 && toEnum i < w && n `testBit` i
 
-    bitSize (BV w _) = w
+    bitSize (BV w _) = fromEnum w
 
     {-# INLINE bitSizeMaybe #-}
-    bitSizeMaybe (BV w _) = Just w
+    bitSizeMaybe (BV w _) = Just $ fromEnum w
 
     {-# INLINE isSigned #-}
     isSigned = const False
 
     {-# INLINE shiftL #-}
     shiftL (BV w n) k
-      | k > w     = BV w 0
-      | otherwise = BV w $ shiftL n k `mod` 2^w
+      | toEnum k > w = BV w 0
+      | otherwise    = BV w $ shiftL n k `mod` 2^w
 
     {-# INLINE shiftR #-}
     shiftR (BV w n) k
-      | k > w     = BV w 0
-      | otherwise = BV w $ shiftR n k
+      | toEnum k > w = BV w 0
+      | otherwise    = BV w $ shiftR n k
 
     {-# INLINE rotateL #-}
     rotateL bv       0 = bv
     rotateL bv@(BV w n) k
       | 0 == w    = bv
-      | k == w    = BV w n
-      | k >  w    = rotateL (BV w n) (k `mod` w)
+      | j == w    = BV w n
+      | j >  w    = rotateL (BV w n) (k `mod` v)
       | otherwise = BV w $ h + l
       where
-        s = w - k
-        l = n `shiftR` s
-        h = (n `shiftL` k) `mod` 2^w
+        !j = toEnum k
+        !v = fromEnum w
+        !s = v - k
+        !l = n `shiftR` s
+        !h = (n `shiftL` k) `mod` 2^w
 
     {-# INLINE rotateR #-}
     rotateR bv       0 = bv
     rotateR bv@(BV w n) k
       | 0 == w    = bv
-      | k == w    = bv
-      | k >  w    = rotateR (BV w n) (k `mod` w)
+      | j == w    = bv
+      | j >  w    = rotateR (BV w n) (k `mod` v)
       | otherwise = BV w $ h + l
       where
-        s = w - k
-        l = n `shiftR` k
-        h = (n `shiftL` s) `mod` 2^w
+        !j = toEnum k
+        !v = fromEnum w
+        !s = v - k
+        !l = n `shiftR` k
+        !h = (n `shiftL` s) `mod` 2^w
 
     {-# INLINE popCount #-}
     popCount = popCount . nat
@@ -187,7 +192,9 @@ instance Bits BitVector where
 
 -- |
 -- /Since: 0.1.0.0/
-instance CoArbitrary BitVector
+instance CoArbitrary BitVector where
+
+    coarbitrary bv = variant (dimension bv)
 
 
 -- |
@@ -203,27 +210,27 @@ instance Eq BitVector where
 instance FiniteBits BitVector where
 
     {-# INLINE finiteBitSize #-}
-    finiteBitSize = dim
+    finiteBitSize = fromEnum . dim
 
     {-# INLINE countTrailingZeros #-}
-    countTrailingZeros (BV w n) = max 0 $ w - lastSetBit - 1
+    countTrailingZeros (BV w n) = max 0 $ fromEnum w - lastSetBit - 1
       where
-        lastSetBit = I# (integerLog2# n)
+        lastSetBit = I# (integerLog2# (toInteger n))
 
     {-# INLINE countLeadingZeros #-}
-    countLeadingZeros (BV w      0) = w
-    countLeadingZeros (BV w intVal) =
-        case intVal of
-          S#       v  -> countTrailingZeros $ iMask .|. I# v
-          Jp# (BN# v) -> f $ ByteArray v
-          Jn# (BN# v) -> f $ ByteArray v
+    countLeadingZeros (BV w      0) = fromEnum w
+    countLeadingZeros (BV w natVal) =
+        case natVal of
+          NatS#      v  -> countTrailingZeros $ iMask .|. W# v
+          NatJ# (BN# v) -> f $ ByteArray v
       where
         iMask = complement zeroBits `xor` (2 ^ w - 1)
+        !x = fromEnum w
 
         f :: ByteArray -> Int
         f byteArr = g 0
           where
-            (q, r) = w `quotRem` 64
+            (q, r) = x `quotRem` 64
             wMask  = complement zeroBits `xor` (2 ^ r - 1) :: Word64
 
             g :: Int -> Int
@@ -242,7 +249,7 @@ instance FiniteBits BitVector where
 -- /Since: 0.1.0.0/
 instance Hashable BitVector where
 
-    hash (BV w n) = w `hashWithSalt` hash n
+    hash (BV w n) = fromEnum w `hashWithSalt` hash n
 
     hashWithSalt salt bv = salt `hashWithSalt` hash bv
 
@@ -287,14 +294,14 @@ instance MonoFoldable BitVector where
     onull   = (== 0) . dim
 
     {-# INLINE olength #-}
-    olength = dim
+    olength = fromEnum . dim
 
 
 -- |
 -- /Since: 0.1.0.0/
 instance MonoFunctor BitVector where
 
-    omap f (BV w n) = BV w . go w $ n `xor` n
+    omap f (BV w n) = BV w . go (fromEnum w) $ n `xor` n
     -- NB: 'setBit' is a GMP function, faster than regular addition.
       where
         go  0 !acc = acc
@@ -344,20 +351,24 @@ instance Ord BitVector where
 instance Semigroup BitVector where
 
     {-# INLINE (<>) #-}
-    (<>) (BV x m) (BV y n) = BV (x + y) $ (n `shiftL` x) + m
+    (<>) (BV x m) (BV y n) = BV (x + y) $ (n `shiftL` fromEnum x) + m
 
     {-# INLINABLE sconcat #-}
-    sconcat xs = uncurry BV $ foldl' f (0,0) xs
+    sconcat xs = BV w' n'
       where
-        f (bitCount, natVal) (BV w n) = (bitCount + w, natVal + (n `shiftL` bitCount))
+        (w', _, n') = foldl' f (0, 0, 0) xs
+        f (bitCountW, bitCountI, natVal) (BV w n) =
+          (bitCountW + w, bitCountI + fromEnum w, natVal + (n `shiftL` bitCountI))
 
     {-# INLINE stimes #-}
     stimes 0  _       = mempty
-    stimes e (BV w n) = BV limit $ go (limit - w) n
+    stimes e (BV w n) = BV limit $ go start n
       where
-        limit = fromEnum e * w
+        !x     = fromEnum w
+        !start = fromEnum $ limit - w
+        !limit = (toEnum . fromEnum) e * w
         go  0 !acc = acc
-        go !k !acc = go (k-w) $ (n `shiftL` k) + acc
+        go !k !acc = go (k-x) $ (n `shiftL` k) + acc
 
 
 -- |
@@ -385,7 +396,7 @@ instance Show BitVector where
 -- [3]1
 {-# INLINE fromBits #-}
 fromBits :: Foldable f => f Bool -> BitVector
-fromBits bs = BV n k
+fromBits bs = BV (toEnum n) k
   -- NB: 'setBit' is a GMP function, faster than regular addition.
   where
     (!n, !k) = foldl' go (0, 0) bs
@@ -412,7 +423,7 @@ fromBits bs = BV n k
 -- [True, True, False, True]
 {-# INLINE toBits #-}
 toBits :: BitVector -> [Bool]
-toBits (BV w n) = testBit n <$> [ 0 .. w - 1 ]
+toBits (BV w n) = testBit n <$> [ 0 .. fromEnum w - 1 ]
 
 
 -- |
@@ -450,14 +461,13 @@ fromNumber
   => Word  -- ^ dimension of bit vector
   -> v     -- ^ /signed, little-endian/ integral value
   -> BitVector
-fromNumber !dimValue !intValue = BV width $ mask .&. v
+fromNumber !dimValue !intValue = BV dimValue . naturalFromInteger $ mask .&. v
   where
     !v | signum int < 0 = negate $ 2^intBits - int
        | otherwise      = int
 
     !int     = toInteger intValue
     !intBits = I# (integerLog2# int)
-    !width   = fromEnum dimValue
     !mask    = 2 ^ dimValue - 1
 
 
@@ -491,8 +501,9 @@ fromNumber !dimValue !intValue = BV width $ mask .&. v
 toSignedNumber :: Num a => BitVector -> a
 toSignedNumber (BV w n) = fromInteger v
   where
-    v | n `testBit` (w-1) = negate $ 2^w - n
-      | otherwise         = n
+    !i = toInteger n
+    !v | n `testBit` (fromEnum w - 1) = negate $ 2^w - i
+       | otherwise = i
 
 
 -- |
@@ -523,7 +534,7 @@ toSignedNumber (BV w n) = fromInteger v
 -- 15
 {-# INLINE toUnsignedNumber #-}
 toUnsignedNumber :: Num a => BitVector -> a
-toUnsignedNumber = fromInteger . nat
+toUnsignedNumber = fromInteger . toInteger . nat
 
 
 -- |
@@ -544,7 +555,7 @@ toUnsignedNumber = fromInteger . nat
 -- 4
 {-# INLINE dimension #-}
 dimension :: BitVector -> Word
-dimension = toEnum . dim
+dimension = dim
 
 
 -- |
@@ -604,11 +615,11 @@ subRange (!lower, !upper) (BV _ n)
       Just i  ->
         case toInt upper of
           Nothing ->
-            let m = maxBound - i + 1
+            let m = toEnum $ maxBound - i + 1
             in  BV m $  n `shiftR` i
           Just j  ->
             let m = j - i + 1
-            in  BV m $ (n `shiftR` i) `mod` (1 `shiftR` m)
+            in  BV (toEnum m) $ (n `shiftR` i) `mod` (1 `shiftR` m)
 
 
 toInt :: Word -> Maybe Int
