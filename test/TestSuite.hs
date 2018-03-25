@@ -372,7 +372,7 @@ bitVectorProperties = testGroup "BitVector properties"
     , testProperty "(0 ==) . toUnsignedNumber ==> isZeroVector" toUnsignedNumImpliesZeroVector
     , testProperty "toSignedNumber . fromNumber === id" bitVectorUnsignedNumIdentity
     , testProperty "isSigned == const False" noSignBitVector
-    , testProperty "i >  j ==> subRange (i,j) === const zeroBits" badSubRangeEmptyResult
+--    , testProperty "i >  j ==> subRange (i,j) === const zeroBits" badSubRangeEmptyResult
     , testProperty "i <= j ==> dimension . subRange (i,j) === const (j - i + 1)" subRangeFixedDimension
     ]
   where
