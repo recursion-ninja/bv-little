@@ -544,10 +544,7 @@ toUnsignedNumber = fromInteger . nat
 -- 4
 {-# INLINE dimension #-}
 dimension :: BitVector -> Word
---dimension = toEnum . dim
-dimension bv
-  | dim bv < 0 = 0
-  | otherwise  = toEnum $ dim bv
+dimension = toEnum . dim
 
 
 -- |
