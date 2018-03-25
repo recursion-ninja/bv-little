@@ -422,6 +422,9 @@ bitVectorProperties = testGroup "BitVector properties"
     badSubRangeEmptyResult range@(lower, upper) bv =
         lower > upper ==> subRange range bv === zeroBits
 
-    subRangeFixedDimension :: (Word, Word) -> BitVector -> Property
-    subRangeFixedDimension range@(lower, upper) bv =
-        lower <= upper ==> dimension (subRange range bv) === min (toEnum (maxBound :: Int)) (upper - lower + 1)
+    subRangeFixedDimension :: (NonNegative Int, NonNegative Int) -> BitVector -> Property
+    subRangeFixedDimension (NonNegative lowerI, NonNegative upperI) bv =
+        lower <= upper ==> dimension (subRange (lower, upper) bv) === upper - lower + 1
+      where
+        lower = toEnum lowerI
+        upper = toEnum upperI

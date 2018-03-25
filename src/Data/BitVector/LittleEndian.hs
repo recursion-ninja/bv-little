@@ -73,8 +73,6 @@ import GHC.Integer.GMP.Internals
 import GHC.Integer.Logarithms
 import Test.QuickCheck (Arbitrary(..), CoArbitrary(..), NonNegative(..), suchThat)
 
-import Debug.Trace
-
 
 -- |
 -- A little-endian bit vector of non-negative dimension.
@@ -613,10 +611,10 @@ subRange (!lower, !upper) (BV _ n)
                 let m = maxBound - i + 1
                 in  BV m b
               Just j  ->
-                let x = traceShowId $ j - i
+                let x = j - i
                     m | x == maxBound = x
                       | otherwise     = x + 1
-                in  BV (traceShowId m) $ b .&. pred (1 `shiftL` m)
+                in  BV m $ b .&. pred (1 `shiftL` m)
 
 
 toInt :: Word -> Maybe Int
