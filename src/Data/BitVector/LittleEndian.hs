@@ -73,6 +73,8 @@ import GHC.Integer.GMP.Internals
 import GHC.Integer.Logarithms
 import Test.QuickCheck (Arbitrary(..), CoArbitrary(..), NonNegative(..), suchThat)
 
+import Debug.Trace
+
 
 -- |
 -- A little-endian bit vector of non-negative dimension.
@@ -544,7 +546,10 @@ toUnsignedNumber = fromInteger . nat
 -- 4
 {-# INLINE dimension #-}
 dimension :: BitVector -> Word
-dimension = toEnum . dim
+--dimension = toEnum . dim
+dimension bv
+  | dim bv < 0 = 0
+  | otherwise  = toEnum $ dim bv
 
 
 -- |
@@ -602,13 +607,16 @@ subRange (!lower, !upper) (BV _ n)
     case toInt lower of
       Nothing -> zeroBits
       Just i  ->
-        case toInt upper of
-          Nothing ->
-            let m = maxBound - i + 1
-            in  BV m $  n `shiftR` i
-          Just j  ->
-            let m = j - i + 1
-            in  BV m $ (n `shiftR` i) .&. pred (1 `shiftR` m)
+        let b = n `shiftR` i
+        in  case toInt upper of
+              Nothing ->
+                let m = maxBound - i + 1
+                in  BV m b
+              Just j  ->
+                let x = traceShowId $ j - i
+                    m | x == maxBound = x
+                      | otherwise     = x + 1
+                in  BV (traceShowId m) $ b .&. pred (1 `shiftL` m)
 
 
 toInt :: Word -> Maybe Int

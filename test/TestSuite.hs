@@ -373,7 +373,7 @@ bitVectorProperties = testGroup "BitVector properties"
     , testProperty "toSignedNumber . fromNumber === id" bitVectorUnsignedNumIdentity
     , testProperty "isSigned == const False" noSignBitVector
     , testProperty "i >  j ==> subRange (i,j) === const zeroBits" badSubRangeEmptyResult
-    , testProperty "i <= j ==> dimension . subRange (i,j) === const (j - i)" subRangeFixedDimension
+    , testProperty "i <= j ==> dimension . subRange (i,j) === const (j - i + 1)" subRangeFixedDimension
     ]
   where
     otoListTest :: BitVector -> Property
@@ -422,13 +422,6 @@ bitVectorProperties = testGroup "BitVector properties"
     badSubRangeEmptyResult range@(lower, upper) bv =
         lower > upper ==> subRange range bv === zeroBits
 
-{-
-    subRangeFixedDimension :: (Int, Int) -> BitVector -> Property
-    subRangeFixedDimension range@(lower, upper) bv =
-        f lower <= f upper ==> dimension (subRange (f lower, f upper) bv) === (f upper - f lower) + 1
-      where
-        f = toEnum . abs
--}
     subRangeFixedDimension :: (Word, Word) -> BitVector -> Property
     subRangeFixedDimension range@(lower, upper) bv =
-        lower <= upper ==> dimension (subRange (lower, upper) bv) === (upper - lower) + 1
+        lower <= upper ==> dimension (subRange range bv) === min (toEnum (maxBound :: Int)) (upper - lower + 1)
