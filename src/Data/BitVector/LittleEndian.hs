@@ -96,8 +96,8 @@ type instance Element BitVector = Bool
 instance Arbitrary BitVector where
 
     arbitrary = do
-        dimVal <- getNonNegative <$> arbitrary
-        let upperBound = 2^dimVal
+        dimVal <- toEnum . getNonNegative <$> arbitrary
+        let upperBound = shiftL 1 dimVal
         intVal <- (getNonNegative <$> arbitrary) `suchThat` (< upperBound)
         pure $ BV dimVal intVal
 
@@ -116,13 +116,13 @@ instance Bits BitVector where
     (BV w1 a) `xor` (BV w2 b) = BV (max w1 w2) $ a `xor` b
 
     {-# INLINE complement #-}
-    complement (BV w n) = BV w $ 2^w - 1 - n
+    complement (BV w n) = BV w $ (shiftL 1 w) - 1 - n
 
     {-# INLINE zeroBits #-}
     zeroBits = BV 0 0
 
     {-# INLINE bit #-}
-    bit i = BV (i+1) (2^i)
+    bit i = BV (i+1) (shiftL 1 i)
 
     {-# INLINE clearBit #-}
     clearBit bv@(BV w n) i
@@ -150,7 +150,7 @@ instance Bits BitVector where
     {-# INLINE shiftL #-}
     shiftL (BV w n) k
       | k > w     = BV w 0
-      | otherwise = BV w $ shiftL n k `mod` 2^w
+      | otherwise = BV w $ shiftL n k .&. pred (shiftL 1 w)
 
     {-# INLINE shiftR #-}
     shiftR (BV w n) k
@@ -167,7 +167,7 @@ instance Bits BitVector where
       where
         s = w - k
         l = n `shiftR` s
-        h = (n `shiftL` k) `mod` 2^w
+        h = (n `shiftL` k) .&. pred (shiftL 1 w)
 
     {-# INLINE rotateR #-}
     rotateR bv       0 = bv
@@ -179,7 +179,7 @@ instance Bits BitVector where
       where
         s = w - k
         l = n `shiftR` k
-        h = (n `shiftL` s) `mod` 2^w
+        h = (n `shiftL` s) .&. pred (shiftL 1 w)
 
     {-# INLINE popCount #-}
     popCount = popCount . nat
@@ -452,7 +452,7 @@ fromNumber
   -> BitVector
 fromNumber !dimValue !intValue = BV width $ mask .&. v
   where
-    !v | signum int < 0 = negate $ 2^intBits - int
+    !v | signum int < 0 = negate $ (shiftL 1 intBits) - int
        | otherwise      = int
 
     !int     = toInteger intValue
@@ -491,7 +491,7 @@ fromNumber !dimValue !intValue = BV width $ mask .&. v
 toSignedNumber :: Num a => BitVector -> a
 toSignedNumber (BV w n) = fromInteger v
   where
-    v | n `testBit` (w-1) = negate $ 2^w - n
+    v | n `testBit` (w-1) = negate $ (shiftL 1 w) - n
       | otherwise         = n
 
 
@@ -608,7 +608,7 @@ subRange (!lower, !upper) (BV _ n)
             in  BV m $  n `shiftR` i
           Just j  ->
             let m = j - i + 1
-            in  BV m $ (n `shiftR` i) `mod` (1 `shiftR` m)
+            in  BV m $ (n `shiftR` i) .&. pred (1 `shiftR` m)
 
 
 toInt :: Word -> Maybe Int
