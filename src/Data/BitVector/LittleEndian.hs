@@ -100,7 +100,7 @@ instance Arbitrary BitVector where
         dimVal <- getNonNegative <$> arbitrary
         let upperBound = shiftL 1 dimVal
         intVal <- (getNonNegative <$> arbitrary) `suchThat` (< upperBound)
-        pure . BV (toEnum dimVal) $ naturalFromInteger intVal
+        pure . BV (toEnum dimVal) $ intToNat intVal
 
 
 -- |
@@ -461,7 +461,7 @@ fromNumber
   => Word  -- ^ dimension of bit vector
   -> v     -- ^ /signed, little-endian/ integral value
   -> BitVector
-fromNumber !dimValue !intValue = BV dimValue . naturalFromInteger $ mask .&. v
+fromNumber !dimValue !intValue = BV dimValue . intToNat $ mask .&. v
   where
     !v | signum int < 0 = negate $ (shiftL 1 intBits) - int
        | otherwise      = int
@@ -631,3 +631,15 @@ toInt w
   | otherwise  = Just $ fromEnum w
   where
     maxInt = toEnum (maxBound :: Int)
+
+
+
+-- |
+-- While similar to the function 'naturalFromInteger' exported from GHC.Natural,
+-- this function does not throw an exception when an negative valued 'Integer'
+-- is supplied and is also compatible with base < 4.10.0.0.
+{-# INLINE intToNat #-}
+intToNat :: Integer -> Natural
+intToNat (S# i#) | I# i# >= 0  = NatS# (int2Word# i#)
+intToNat (Jp# bn)              = NatJ# bn
+intToNat _                     = NatS# (int2Word# 0#)
