@@ -77,7 +77,6 @@ install:
   # Install dependencies and utility programs
   - cabal install --enable-benchmarks --enable-documentation --enable-tests --only-dependencies
   - cabal install hpc
-  - cabal install hpc-coveralls
 
 script:
   - cabal configure --enable-coverage --enable-benchmarks --enable-tests
@@ -89,6 +88,7 @@ script:
 
 after_script:
   - export PATH=~/.cabal/bin:$PATH
+  - cabal install hpc-coveralls
   - hpc-coveralls --coverage-mode=StrictlyFullLines
                   --exclude-dir=bench
                   --exclude-dir=tests
