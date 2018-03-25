@@ -98,9 +98,9 @@ instance Arbitrary BitVector where
 
     arbitrary = do
         dimVal <- getNonNegative <$> arbitrary
-        let upperBound = 2^dimVal
-        natVal <- (getNonNegative <$> arbitrary) `suchThat` (< upperBound)
-        pure . BV (toEnum dimVal) $ naturalFromInteger natVal
+        let upperBound = shiftL 1 dimVal
+        intVal <- (getNonNegative <$> arbitrary) `suchThat` (< upperBound)
+        pure . BV (toEnum dimVal) $ naturalFromInteger intVal
 
 
 -- |
@@ -117,13 +117,13 @@ instance Bits BitVector where
     (BV w1 a) `xor` (BV w2 b) = BV (max w1 w2) $ a `xor` b
 
     {-# INLINE complement #-}
-    complement (BV w n) = BV w $ 2^w - 1 - n
+    complement (BV w n) = BV w $ (shiftL 1 (fromEnum w)) - 1 - n
 
     {-# INLINE zeroBits #-}
     zeroBits = BV 0 0
 
     {-# INLINE bit #-}
-    bit i = BV (succ $ toEnum i) (2^i)
+    bit i = BV (succ $ toEnum i)  (shiftL 1 i)
 
     {-# INLINE clearBit #-}
     clearBit bv@(BV w n) i
@@ -151,7 +151,7 @@ instance Bits BitVector where
     {-# INLINE shiftL #-}
     shiftL (BV w n) k
       | toEnum k > w = BV w 0
-      | otherwise    = BV w $ shiftL n k `mod` 2^w
+      | otherwise    = BV w $ shiftL n k .&. pred (shiftL 1 (fromEnum w))
 
     {-# INLINE shiftR #-}
     shiftR (BV w n) k
@@ -170,7 +170,7 @@ instance Bits BitVector where
         !v = fromEnum w
         !s = v - k
         !l = n `shiftR` s
-        !h = (n `shiftL` k) `mod` 2^w
+        !h = (n `shiftL` k) .&. pred (shiftL 1 (fromEnum w))
 
     {-# INLINE rotateR #-}
     rotateR bv       0 = bv
@@ -184,7 +184,7 @@ instance Bits BitVector where
         !v = fromEnum w
         !s = v - k
         !l = n `shiftR` k
-        !h = (n `shiftL` s) `mod` 2^w
+        !h = (n `shiftL` s) .&. pred (shiftL 1 (fromEnum w))
 
     {-# INLINE popCount #-}
     popCount = popCount . nat
@@ -463,7 +463,7 @@ fromNumber
   -> BitVector
 fromNumber !dimValue !intValue = BV dimValue . naturalFromInteger $ mask .&. v
   where
-    !v | signum int < 0 = negate $ 2^intBits - int
+    !v | signum int < 0 = negate $ (shiftL 1 intBits) - int
        | otherwise      = int
 
     !int     = toInteger intValue
@@ -502,7 +502,7 @@ toSignedNumber :: Num a => BitVector -> a
 toSignedNumber (BV w n) = fromInteger v
   where
     !i = toInteger n
-    !v | n `testBit` (fromEnum w - 1) = negate $ 2^w - i
+    !v | n `testBit` (fromEnum w - 1) = negate $ (shiftL 1 (fromEnum w)) - i
        | otherwise = i
 
 
@@ -613,13 +613,16 @@ subRange (!lower, !upper) (BV _ n)
     case toInt lower of
       Nothing -> zeroBits
       Just i  ->
-        case toInt upper of
-          Nothing ->
-            let m = toEnum $ maxBound - i + 1
-            in  BV m $  n `shiftR` i
-          Just j  ->
-            let m = j - i + 1
-            in  BV (toEnum m) $ (n `shiftR` i) `mod` (1 `shiftR` m)
+        let b = n `shiftR` i
+        in  case toInt upper of
+              Nothing ->
+                let m = toEnum $ maxBound - i + 1
+                in  BV m $  n `shiftR` i
+              Just j  ->
+                let x = j - i
+                    m | x == maxBound = x
+                      | otherwise     = x + 1
+                in  BV (toEnum m) $ b .&. pred (1 `shiftL` m)
 
 
 toInt :: Word -> Maybe Int
