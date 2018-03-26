@@ -74,6 +74,8 @@ import GHC.Integer.Logarithms
 import GHC.Natural
 import Test.QuickCheck (Arbitrary(..), CoArbitrary(..), NonNegative(..), suchThat, variant)
 
+import Debug.Trace
+
 
 -- |
 -- A little-endian bit vector of non-negative dimension.
@@ -164,33 +166,42 @@ instance Bits BitVector where
       | otherwise    = BV w $ shiftR n k
 
     {-# INLINE rotateL #-}
-    rotateL bv  0 = bv
+    rotateL bv          0 = bv
+    rotateL bv@(BV 0 _) _ = bv
+    rotateL bv@(BV 1 _) _ = bv
     rotateL bv@(BV w n) k
-      | 0 == w    = bv
-      | j == w    = bv
-      | j >  w    = rotateL bv (k `mod` v)
-      | otherwise = BV w $ h + l
+      | k <  0    = bv
+      | j >= w    = go . fromEnum $ j `mod` w
+      | otherwise = go k
       where
-        !j = toEnum k
-        !v = fromEnum w
-        !s = v - k
-        !l = n `shiftR` s
-        !h = (n `shiftL` k) .&. pred (shiftL 1 v)
+        !j     = toEnum k
+        go  0  = bv
+        go !i  = (\x -> trace (unwords ["rotateL",show bv,show k,"=",show x]) x). BV w $ h + l
+          where
+            !v = fromEnum w
+            !d = v - i
+            !m = pred $ shiftL 1 d
+            !l = n `shiftR` d
+            !h = (n .&. m) `shiftL` i
 
     {-# INLINE rotateR #-}
     rotateR bv          0 = bv
     rotateR bv@(BV 0 _) _ = bv
+    rotateR bv@(BV 1 _) _ = bv
     rotateR bv@(BV w n) k
-      | k < 0     = bv
-      | j > w     = rotateR bv (k `mod` v)
-      | otherwise = BV w $ h + l
+      | k <  0    = bv
+      | j >= w    = go . fromEnum $ j `mod` w
+      | otherwise = go k
       where
-        !j = toEnum k
-        !v = fromEnum w
-        !s = v - k
-        !m = pred $ shiftL 1 s
-        !l = n `shiftR` k
-        !h = (n .&. m) `shiftL` s
+        !j     = toEnum k
+        go  0  = bv
+        go !i  = (\x -> trace (unwords ["rotateR",show bv,show k,"=",show x]) x). BV w $ h + l
+          where
+            !v = fromEnum w
+            !d = v - i
+            !m = pred $ shiftL 1 d
+            !l = n `shiftR` i
+            !h = (n .&. m) `shiftL` d
 
     {-# INLINE popCount #-}
     popCount = popCount . nat

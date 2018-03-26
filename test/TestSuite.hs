@@ -59,8 +59,8 @@ bitsTests = testGroup "Properties of Bits"
     , testProperty "(`shiftR`  i) === (`shift`  -i)" rightShiftNegativeShift
     , testProperty "(`rotateL` i) === (`rotate`  i)" leftRotatePositiveRotate
     , testProperty "(`rotateR` i) === (`rotate` -i)" rightRotateNegativeRotate
---    , testProperty "(`rotateR` i) . (`rotateL` i) === id" leftRightRotateIdentity
---    , testProperty "(`rotateL` i) . (`rotateR` i) === id" rightLeftRotateIdentity
+    , testProperty "(`rotateR` i) . (`rotateL` i) === id" leftRightRotateIdentity
+    , testProperty "(`rotateL` i) . (`rotateR` i) === id" rightLeftRotateIdentity
     ]
   where
     zeroBitsAndClearBit :: NonNegative Int -> Property
