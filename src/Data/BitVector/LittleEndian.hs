@@ -126,9 +126,14 @@ instance Bits BitVector where
     bit i = BV (succ $ toEnum i)  (shiftL 1 i)
 
     {-# INLINE clearBit #-}
+    -- We do this more complicated operation rather than call 'clearBit'
+    -- because it is undefined for Natural in base < 4.10.0.0
     clearBit bv@(BV w n) i
       | i < 0 || toEnum i >= w = bv
-      | otherwise = BV w $ n `clearBit` i
+      | otherwise = BV w $ n .&. mask
+      where
+        allBits = pred . shiftL 1 $ fromEnum w
+        mask    = bit i `xor` allBits
 
 {-
     {-# INLINE setBit #-}
@@ -159,32 +164,33 @@ instance Bits BitVector where
       | otherwise    = BV w $ shiftR n k
 
     {-# INLINE rotateL #-}
-    rotateL bv       0 = bv
+    rotateL bv  0 = bv
     rotateL bv@(BV w n) k
       | 0 == w    = bv
-      | j == w    = BV w n
-      | j >  w    = rotateL (BV w n) (k `mod` v)
+      | j == w    = bv
+      | j >  w    = rotateL bv (k `mod` v)
       | otherwise = BV w $ h + l
       where
         !j = toEnum k
         !v = fromEnum w
         !s = v - k
         !l = n `shiftR` s
-        !h = (n `shiftL` k) .&. pred (shiftL 1 (fromEnum w))
+        !h = (n `shiftL` k) .&. pred (shiftL 1 v)
 
     {-# INLINE rotateR #-}
-    rotateR bv       0 = bv
+    rotateR bv          0 = bv
+    rotateR bv@(BV 0 _) _ = bv
     rotateR bv@(BV w n) k
-      | 0 == w    = bv
-      | j == w    = bv
-      | j >  w    = rotateR (BV w n) (k `mod` v)
+      | k < 0     = bv
+      | j > w     = rotateR bv (k `mod` v)
       | otherwise = BV w $ h + l
       where
         !j = toEnum k
         !v = fromEnum w
         !s = v - k
+        !m = pred $ shiftL 1 s
         !l = n `shiftR` k
-        !h = (n `shiftL` s) .&. pred (shiftL 1 (fromEnum w))
+        !h = (n .&. m) `shiftL` s
 
     {-# INLINE popCount #-}
     popCount = popCount . nat
