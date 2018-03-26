@@ -74,8 +74,6 @@ import GHC.Integer.Logarithms
 import GHC.Natural
 import Test.QuickCheck (Arbitrary(..), CoArbitrary(..), NonNegative(..), suchThat, variant)
 
-import Debug.Trace
-
 
 -- |
 -- A little-endian bit vector of non-negative dimension.
@@ -132,10 +130,10 @@ instance Bits BitVector where
     -- because it is undefined for Natural in base < 4.10.0.0
     clearBit bv@(BV w n) i
       | i < 0 || toEnum i >= w = bv
-      | otherwise = BV w $ n .&. mask
-      where
-        allBits = pred . shiftL 1 $ fromEnum w
-        mask    = bit i `xor` allBits
+      | otherwise =
+        let !allBits = pred . shiftL 1 $ fromEnum w
+            !mask    = bit i `xor` allBits
+        in  BV w $ n .&. mask
 
 {-
     {-# INLINE setBit #-}
@@ -176,7 +174,7 @@ instance Bits BitVector where
       where
         !j     = toEnum k
         go  0  = bv
-        go !i  = (\x -> trace (unwords ["rotateL",show bv,show k,"=",show x]) x). BV w $ h + l
+        go !i  = BV w $ h + l
           where
             !v = fromEnum w
             !d = v - i
@@ -195,11 +193,11 @@ instance Bits BitVector where
       where
         !j     = toEnum k
         go  0  = bv
-        go !i  = (\x -> trace (unwords ["rotateR",show bv,show k,"=",show x]) x). BV w $ h + l
+        go !i  = BV w $ h + l
           where
             !v = fromEnum w
             !d = v - i
-            !m = pred $ shiftL 1 d
+            !m = pred $ shiftL 1 i
             !l = n `shiftR` i
             !h = (n .&. m) `shiftL` d
 
