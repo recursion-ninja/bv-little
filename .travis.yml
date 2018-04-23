@@ -11,6 +11,10 @@ matrix:
       env: GHCVER=8.2.2
       os: osx
 
+    - compiler: "ghc-8.4.2"
+      env: GHCVER=8.4.2
+      os: osx
+
     # Linux builds
     - compiler: "ghc-7.10.3"
       os: linux
@@ -27,16 +31,16 @@ matrix:
       sudo: false
       addons: {apt: {packages: [cabal-install-1.24, ghc-8.2.2], sources: [hvr-ghc]}}
     
-    - compiler: "ghc-8.4.1"
+    - compiler: "ghc-8.4.2"
       os: linux
       sudo: false
-      addons: {apt: {packages: [cabal-install-1.24, ghc-8.4.1], sources: [hvr-ghc]}}
+      addons: {apt: {packages: [cabal-install-1.24, ghc-8.4.2], sources: [hvr-ghc]}}
 
     - compiler: "ghc-head"
       env: $GHCHEAD=true
       os: linux
       sudo: false
-      addons: {apt: {packages: [cabal-install-1.24, ghc-8.4.1], sources: [hvr-ghc]}}
+      addons: {apt: {packages: [cabal-install-1.24, ghc-8.4.2], sources: [hvr-ghc]}}
 
   allow_failures:
     - compiler: "ghc-head"
@@ -45,7 +49,8 @@ before_install:
   # MacOS setups
   # Install specific GHC version
   - if [[ "$TRAVIS_OS_NAME" == "osx" && "$GHCVER" == "8.0.2" ]]; then brew install ghc@8.0 cabal-install && export PATH=/usr/local/opt/ghc@8.0/bin:$PATH; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$GHCVER" == "8.2.2" ]]; then brew install ghc     cabal-install && export PATH=/usr/local/opt/ghc/bin:$PATH; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$GHCVER" == "8.2.2" ]]; then brew install ghc@8.2 cabal-install && export PATH=/usr/local/opt/ghc@8.2/bin:$PATH; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$GHCVER" == "8.4.2" ]]; then brew install ghc     cabal-install && export PATH=/usr/local/opt/ghc/bin:$PATH; fi
 
   # Linux setups initial setup
   # Export PATH to specific GHC & Cabal version specific programs
