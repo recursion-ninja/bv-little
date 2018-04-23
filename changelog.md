@@ -1,5 +1,7 @@
 ### v0.1.1.0
 
+  * Updated to well-typed internal representation
+
   * Increased benchmark coverage
 
   * Increased test suite coverage
