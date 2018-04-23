@@ -99,7 +99,7 @@ Test-Suite test-suite
 
   main-is:          TestSuite.hs
 
-  build-depends:      base             >= 4.5.1 && < 4.11.1
+  build-depends:      base             >= 4.5.1 && < 4.12
                     , bv-little
                     , deepseq
                     , hashable
@@ -125,7 +125,7 @@ benchmark benchmark-suite
 
   main-is:          Benchmarks.hs
 
-  build-depends:      base             >= 4.5.1 && < 4.11.1
+  build-depends:      base             >= 4.5.1 && < 4.12
                     , bv-little
                     , criterion
                     , deepseq
