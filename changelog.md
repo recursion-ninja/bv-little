@@ -1,6 +1,6 @@
 ### Unreleased changes
 
-  * None
+  * Updating to primitive >= 0.6.4.0 for transative bug fixes
 
 ### [v0.1.1][1]
 

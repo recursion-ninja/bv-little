@@ -41,7 +41,7 @@ library
                     , hashable
                     , integer-gmp
                     , mono-traversable
-                    , primitive
+                    , primitive        >= 6.4.0
                     , QuickCheck
 
   if !impl(ghc >= 8.0)
