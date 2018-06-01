@@ -6,6 +6,12 @@
 
   * Updated to well-typed internal representation
 
+  * Corrected defect in rotate, rotateL, and rotateR
+
+  * Improved performance by switching exponentiation with base 2 to bit shifting operations
+
+  * Improved performance of clearBit by increasing strictness
+
   * Increased benchmark coverage
 
   * Increased test suite coverage
