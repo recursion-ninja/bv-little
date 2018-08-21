@@ -11,8 +11,8 @@ matrix:
       env: GHCVER=8.2.2
       os: osx
 
-    - compiler: "ghc-8.4.2"
-      env: GHCVER=8.4.2
+    - compiler: "ghc-8.4.3"
+      env: GHCVER=8.4.3
       os: osx
 
     # Linux builds
@@ -31,16 +31,21 @@ matrix:
       sudo: false
       addons: {apt: {packages: [cabal-install-1.24, ghc-8.2.2], sources: [hvr-ghc]}}
     
-    - compiler: "ghc-8.4.2"
+    - compiler: "ghc-8.4.3"
       os: linux
       sudo: false
-      addons: {apt: {packages: [cabal-install-1.24, ghc-8.4.2], sources: [hvr-ghc]}}
+      addons: {apt: {packages: [cabal-install-1.24, ghc-8.4.3], sources: [hvr-ghc]}}
+
+    - compiler: "ghc-8.6.1"
+      os: linux
+      sudo: false
+      addons: {apt: {packages: [cabal-install-1.24, ghc-8.6.1], sources: [hvr-ghc]}}
 
     - compiler: "ghc-head"
       env: $GHCHEAD=true
       os: linux
       sudo: false
-      addons: {apt: {packages: [cabal-install-1.24, ghc-8.4.2], sources: [hvr-ghc]}}
+      addons: {apt: {packages: [cabal-install-1.24, ghc-head], sources: [hvr-ghc]}}
 
   allow_failures:
     - compiler: "ghc-head"
