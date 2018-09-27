@@ -3,9 +3,9 @@ language: generic
 matrix:
   include:
     # MacOS builds
-    - compiler: "ghc-8.0.2"
-      env: GHCVER=8.0.2
-      os: osx
+#   - compiler: "ghc-8.0.2"
+#     env: GHCVER=8.0.2
+#     os: osx
     
     - compiler: "ghc-8.2.2"
       env: GHCVER=8.2.2
