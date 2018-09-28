@@ -1,6 +1,7 @@
-### Unreleased changes
+### [v0.1.2][1]
 
-  * Updating to primitive >= 0.6.4.0 for transative bug fixes
+  * Updating to base bounds for GHC 8.6.1
+
 
 ### [v0.1.1][1]
 
@@ -30,3 +31,4 @@
 
 [0]: https://github.com/recursion-ninja/bv-little/tree/v0.1.0
 [1]: https://github.com/recursion-ninja/bv-little/tree/v0.1.1
+[2]: https://github.com/recursion-ninja/bv-little/tree/v0.1.2
