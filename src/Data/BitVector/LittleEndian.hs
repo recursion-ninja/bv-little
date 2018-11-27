@@ -438,7 +438,11 @@ fromBits bs = BV (toEnum n) k
 -- [True, True, False, True]
 {-# INLINE toBits #-}
 toBits :: BitVector -> [Bool]
-toBits (BV w n) = testBit n <$> [ 0 .. fromEnum w - 1 ]
+toBits (BV w n) = go (fromEnum w) []
+  where
+    go 0 bs = bs
+    go i bs = let !j = i - 1
+              in go j $ n `testBit` j : bs
 
 
 -- |

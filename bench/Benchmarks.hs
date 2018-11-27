@@ -29,6 +29,7 @@ benchmarks = bgroup "BitVector"
     , finiteBitsBench
     , hashableBench
     , semigroupBench
+--    , monoFoldableBench
     ]
 
 
@@ -176,6 +177,16 @@ semigroupBench = bgroup "Semigroup"
     [ binaryBenchmark "(<>)" (<>)
     ]
   
+
+{-
+monoFoldableBench :: Benchmark
+monoFoldableBench = bgroup "MonoFoldable"
+    [ unaryBenchmark "ofold"      finiteBitSize
+    , unaryBenchmark "countLeadingZeros"  countLeadingZeros
+    , unaryBenchmark "countTrailingZeros" countLeadingZeros
+    ]
+-}
+
 
 constantNumberTimeBenchmark :: (NFData a, NFData b) => String -> (Integer -> a) -> (Integer -> a -> b) -> Benchmark
 constantNumberTimeBenchmark  label f g = bgroup label $ generateBenchmark <$> magicNumbers
