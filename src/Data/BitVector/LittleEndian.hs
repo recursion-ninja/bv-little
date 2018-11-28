@@ -342,6 +342,10 @@ instance MonoFoldable BitVector where
     {-# INLINE olength #-}
     olength = fromEnum . dim
 
+    -- | /O(1)/
+    {-# INLINE olength64 #-}
+    olength64 = toEnum . olength
+
     {-# INLINE otraverse_ #-}
     otraverse_ f (BV w n) = go (fromEnum w) 
       where
