@@ -291,42 +291,170 @@ instance Monoid BitVector where
 instance MonoFoldable BitVector where
 
     {-# INLINE ofoldMap #-}
-    ofoldMap f = mconcat . fmap f. toBits
-
+    ofoldMap f (BV w n) = go $ fromEnum w
+      where
+        go 0 = mempty
+        go i = let !j = i - 1
+               in  f (n `testBit` j) `mappend` go j
+                      
     {-# INLINE ofoldr #-}
-    ofoldr f e = foldr f e . toBits
+--    ofoldr f e = foldr f e . toBits
+    ofoldr f e (BV w n) = go (fromEnum w) e
+      where
+        go 0 acc = acc
+        go i acc = let !j = i - 1
+                   in f (n `testBit` j) $ go j acc
 
     {-# INLINE ofoldl' #-}
-    ofoldl' f e = foldl' f e . toBits
+--    ofoldl' f e = foldl' f e . toBits
+    ofoldl' f e (BV w n) = go (fromEnum w) e
+      where
+        go 0 acc = acc
+        go i acc = let !j = i - 1
+                       !a = f acc (n `testBit` j)
+                   in go j a
 
+    -- | /O(1)/
+    {-# INLINE oall #-}
+    oall _ (BV 0 _) = True
+    oall f (BV w n) =
+        case (f False, f True) of
+          (False, False) -> False
+          (True , True ) -> True
+          (False, True ) -> n == bit (fromEnum w) - 1
+          (True , False) -> n == 0
+
+    -- | /O(1)/
+    {-# INLINE oany #-}
+    oany _ (BV 0 _) = False
+    oany f (BV w n) =
+        case (f False, f True) of
+          (False, False) -> False
+          (True , True ) -> True
+          (False, True ) -> n > 0
+          (True , False) -> n < bit (fromEnum w) - 1
+
+    -- | /O(1)/
+    {-# INLINE onull #-}
+    onull   = (== 0) . dim
+
+    -- | /O(1)/
+    {-# INLINE olength #-}
+    olength = fromEnum . dim
+
+    {-# INLINE otraverse_ #-}
+    otraverse_ f (BV w n) = go (fromEnum w) 
+      where
+        go 0 = pure ()
+        go i = let !j = i - 1
+                   !a = f (n `testBit` j)
+               in  a *> go j
+
+
+    {-# INLINE ofoldlM #-}
+    ofoldlM f e (BV w n) = go (fromEnum w) e
+      where
+        go 0 acc = pure acc
+        go i acc = let !j = i - 1
+                       !x = f acc (n `testBit` j)
+                   in  x >>= go j
+        
     {-# INLINE ofoldr1Ex #-}
     ofoldr1Ex f = foldr1 f . toBits
 
     {-# INLINE ofoldl1Ex' #-}
     ofoldl1Ex' f = foldl1 f . toBits
 
-    {-# INLINE onull #-}
-    onull   = (== 0) . dim
+    -- | /O(1)/
+    {-# INLINE headEx #-}
+    headEx (BV 0 _) = error "Call to MonoFoldable.headEx on an empty BitVector!"
+    headEx (BV _ n) = n `testBit` 0
 
-    {-# INLINE olength #-}
-    olength = fromEnum . dim
+    -- | /O(1)/
+    {-# INLINE lastEx #-}
+    lastEx (BV 0 _) = error "Call to MonoFoldable.lastEx on an empty BitVector!"
+    lastEx (BV w n) = n `testBit` (fromEnum w - 1)
+
+    -- | /O(1)/
+    {-# INLINE maximumByEx #-}
+    maximumByEx _ (BV 0 _) = error "Call to MonoFoldable.maximumByEx on an empty BitVector!"
+    maximumByEx _ (BV 1 n) = n /= 0
+    maximumByEx f (BV w n) =
+        let !allBits  = bit (fromEnum w) - 1
+            !anyFalse = n < allBits
+            !anyTrue  = n > 0
+        in  case f False False of
+              GT -> anyFalse
+              _  -> case f True True of
+                      GT -> anyTrue
+                      _  -> if   n == allBits
+                            then True  -- All bits on,  max value is true
+                            else if n == 0
+                            then False -- All bits off, max value is false
+                            else case (f False True, f True False) of
+                                   (LT, LT) -> True 
+                                   (LT, EQ) -> True
+                                   (LT, GT) -> anyTrue
+                                   (EQ, LT) -> False
+                                   (EQ, EQ) -> True
+                                   (EQ, GT) -> True
+                                   (GT, LT) -> not anyFalse
+                                   (GT, EQ) -> False
+                                   (GT, GT) -> False
+
+
+    -- | /O(1)/
+    {-# INLINE minimumByEx #-}
+    minimumByEx _ (BV 0 _) = error "Call to MonoFoldable.minimumByEx on an empty BitVector!"
+    minimumByEx _ (BV 1 n) = n /= 0
+    minimumByEx f (BV w n) =
+        let !allBits  = bit (fromEnum w) - 1
+            !anyFalse = n < allBits
+            !anyTrue  = n > 0
+        in  case f False False of
+              LT -> anyFalse
+              _  -> case f True True of
+                      LT -> anyTrue
+                      _  -> if   n == allBits
+                            then True  -- All bits on,  min value is true
+                            else if n == 0
+                            then False -- All bits off, min value is false
+                            else case (f False True, f True False) of
+                                   (LT, LT) -> False
+                                   (LT, EQ) -> False
+                                   (LT, GT) -> not anyFalse
+                                   (EQ, LT) -> True
+                                   (EQ, EQ) -> False
+                                   (EQ, GT) -> False
+                                   (GT, LT) -> anyTrue
+                                   (GT, EQ) -> True
+                                   (GT, GT) -> True
+
+
+    -- | /O(1)/
+    {-# INLINE oelem #-}
+    oelem _     (BV 0 _) = False
+    oelem True  (BV _ n) = n > 0
+    oelem False (BV w n) = n < bit (fromEnum w) - 1
+
+    -- | /O(1)/
+    {-# INLINE onotElem #-}
+    onotElem e = not . oelem e
 
 
 -- |
 -- /Since: 0.1.0.0/
 instance MonoFunctor BitVector where
 
-    omap f (BV w n) = BV w . go (fromEnum w) $ n `xor` n
-    -- NB: 'setBit' is a GMP function, faster than regular addition.
-      where
-        go  0 !acc = acc
-        go !i !acc = go i' acc'
-          where
-            i' = i - 1
-            acc'
-              | f (testBit n i') = acc `setBit` i'
-              | otherwise        = acc
-
+    -- | /O(1)/
+    {-# INLINE omap #-}
+    omap f bv@(BV w n) =
+        case (f False, f True) of
+          (False, False) -> BV w 0
+          (True , True ) -> BV w $ bit (fromEnum w) - 1
+          (False, True ) -> bv
+          (True , False) -> let !allOnes = bit (fromEnum w) - 1
+                            in  BV w $ n `xor` allOnes
 
 
 -- |
