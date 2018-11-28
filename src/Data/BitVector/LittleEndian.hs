@@ -298,7 +298,6 @@ instance MonoFoldable BitVector where
                in  f (n `testBit` j) `mappend` go j
                       
     {-# INLINE ofoldr #-}
---    ofoldr f e = foldr f e . toBits
     ofoldr f e (BV w n) = go (fromEnum w) e
       where
         go 0 acc = acc
@@ -306,7 +305,6 @@ instance MonoFoldable BitVector where
                    in f (n `testBit` j) $ go j acc
 
     {-# INLINE ofoldl' #-}
---    ofoldl' f e = foldl' f e . toBits
     ofoldl' f e (BV w n) = go (fromEnum w) e
       where
         go 0 acc = acc
@@ -363,25 +361,87 @@ instance MonoFoldable BitVector where
                        !x = f acc (n `testBit` j)
                    in  x >>= go j
         
-    {-# INLINE ofoldr1Ex #-}
-    ofoldr1Ex f = foldr1 f . toBits
+    {-# INLINE ofoldMap1Ex #-}
+    ofoldMap1Ex _ (BV 0 _) = Prelude.error "Data.MonoTraversable.ofoldMap1Ex on an empty BitVector!"
+    ofoldMap1Ex f (BV w n) = go $ fromEnum w
+      where
+        go 1 = f $ n `testBit` 0
+        go i = let !j = i - 1
+               in  f (n `testBit` j) <> go j
 
+    -- | /O(1)/
+    {-# INLINE ofoldr1Ex #-}
+    ofoldr1Ex _    (BV 0 _) = Prelude.error "Data.MonoTraversable.ofoldr1Ex on an empty BitVector!"
+    ofoldr1Ex _    (BV 1 _) = n > 0
+    ofoldr1Ex f bv@(BV w n) =
+        -- See the following entry for explanation:
+        -- https://en.wikipedia.org/wiki/Truth_table#Truth_table_for_all_binary_logical_operators
+        --
+        -- cases of f p q
+        case (f True True, f True False, f False True, f False False) of
+          -- Contradiction (Const False)
+          (False, False, False, False) -> False
+          -- Logical NOR
+          (False, False, False, True ) -> let !lz = countLeadingZeros bv
+                                          in  if w - lz == 1 then even lz else odd lz
+          -- Converse non-implication
+          --   Only True when of the form <0+1>
+          (False, False, True , False) -> n == bit (fromEnum w - 1)
+          -- NOT p
+          (False, False, True , True ) -> not (n `testBit` 0)
+          -- Logical non-implication
+          --   Only True when of the form <1+0> and the length is even
+          (False, True , False, False) -> even w && n == bit (fromEnum w) - 2 
+          -- NOT q
+          (False, True , False, True ) -> let !v = n `testBit` (fromEnum w - 1)
+                                          in  if odd w then not v else v
+          -- Logical XOR
+          (False, True , True , False) -> odd  $ popCount n
+          -- Logical NAND
+          (False, True , True , True ) -> n <  bit (fromEnum w) - 1
+          -- Logical AND
+          (True , False, False, False) -> n == bit (fromEnum w) - 1
+          -- Logical XNOR
+          (True , False, False, True ) -> even $ popCount n
+          -- Const q
+          (True , False, True , False) -> n `testBit` (fromEnum w - 1)
+          -- Logical implication
+          --   only False when of the form <.*10>, ie. if the last two bits are "10"
+          (True , False, True , True ) -> let !i = fromeEnum w - 1
+                                          in  (n `testBit` i - 1) `f` (n `testBit` i)
+          -- Const p
+          (True , True , False, False) -> n `testBit` 0
+          -- Converse implication
+          --   only True when of the form <01.*>, ie. if the first two bits are "01"
+          (True , True , False, True ) -> countLeadingZeros bv == 1
+          -- Logical OR
+          (True , True , True , False) -> n > 0
+          -- Constant True
+          (True , True , True , True ) -> True
+
+    -- | /O(n)/
     {-# INLINE ofoldl1Ex' #-}
-    ofoldl1Ex' f = foldl1 f . toBits
+    ofoldl1Ex' _ (BV 0 _) = Prelude.error "Data.MonoTraversable.ofoldl1Ex' on an empty BitVector!"
+    ofoldl1Ex' _ (BV 1 n) = n > 0
+      where
+        go 2 = f (n `testBit` 1) $ n `testBit` 0
+        go i = let !j = i - 1
+                   !a = f acc (n `testBit` j)
+               in go j a
 
     -- | /O(1)/
     {-# INLINE headEx #-}
-    headEx (BV 0 _) = error "Call to MonoFoldable.headEx on an empty BitVector!"
+    headEx (BV 0 _) = error "Call to Data.MonoFoldable.headEx on an empty BitVector!"
     headEx (BV _ n) = n `testBit` 0
 
     -- | /O(1)/
     {-# INLINE lastEx #-}
-    lastEx (BV 0 _) = error "Call to MonoFoldable.lastEx on an empty BitVector!"
+    lastEx (BV 0 _) = error "Call to Data.MonoFoldable.lastEx on an empty BitVector!"
     lastEx (BV w n) = n `testBit` (fromEnum w - 1)
 
     -- | /O(1)/
     {-# INLINE maximumByEx #-}
-    maximumByEx _ (BV 0 _) = error "Call to MonoFoldable.maximumByEx on an empty BitVector!"
+    maximumByEx _ (BV 0 _) = error "Call to Data.MonoFoldable.maximumByEx on an empty BitVector!"
     maximumByEx _ (BV 1 n) = n /= 0
     maximumByEx f (BV w n) =
         let !allBits  = bit (fromEnum w) - 1
@@ -406,10 +466,9 @@ instance MonoFoldable BitVector where
                                    (GT, EQ) -> False
                                    (GT, GT) -> False
 
-
     -- | /O(1)/
     {-# INLINE minimumByEx #-}
-    minimumByEx _ (BV 0 _) = error "Call to MonoFoldable.minimumByEx on an empty BitVector!"
+    minimumByEx _ (BV 0 _) = error "Call to Data.MonoFoldable.minimumByEx on an empty BitVector!"
     minimumByEx _ (BV 1 n) = n /= 0
     minimumByEx f (BV w n) =
         let !allBits  = bit (fromEnum w) - 1
@@ -433,7 +492,6 @@ instance MonoFoldable BitVector where
                                    (GT, LT) -> anyTrue
                                    (GT, EQ) -> True
                                    (GT, GT) -> True
-
 
     -- | /O(1)/
     {-# INLINE oelem #-}
