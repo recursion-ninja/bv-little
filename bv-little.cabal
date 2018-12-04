@@ -106,9 +106,11 @@ Test-Suite test-suite
                     , hashable
                     , mono-traversable
                     , QuickCheck
+                    , smallcheck       >= 1.1.5
                     , tasty
                     , tasty-hunit
                     , tasty-quickcheck
+                    , tasty-smallcheck
 
   if !impl(ghc >= 8.0)
 
@@ -117,8 +119,13 @@ Test-Suite test-suite
 
   default-language: Haskell2010
 
-  hs-source-dirs:   test
+  hs-source-dirs:   test, util
 
+  other-modules:    Data.BitVector.Visual
+                    Operator.Binary.Comparison
+                    Operator.Binary.Logical
+                    Operator.Unary.Logical
+                    
 
 benchmark benchmark-suite
 
@@ -131,6 +138,9 @@ benchmark benchmark-suite
                     , criterion
                     , deepseq
                     , hashable
+                    , mono-traversable
+                    , QuickCheck
+                    , smallcheck       >= 1.1.5
 
   if !impl(ghc >= 8.0)
 
@@ -155,4 +165,9 @@ benchmark benchmark-suite
                     -- Turn off type default warnings
                     -fno-warn-type-defaults
 
-  hs-source-dirs:   bench
+  hs-source-dirs:   bench, util
+
+  other-modules:    Operator.Binary.Comparison
+                    Operator.Binary.Logical
+                    Operator.Unary.Logical
+                    

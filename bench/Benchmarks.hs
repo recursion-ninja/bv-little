@@ -8,11 +8,15 @@ import Data.Bits
 import Data.BitVector.LittleEndian
 import Data.List (nubBy)
 import Data.Hashable
+import Data.MonoTraversable
 import Data.Semigroup
+import Operator.Binary.Logical
+import Operator.Unary.Logical
 
 
 main :: IO ()
 main = defaultMain [ benchmarks ]
+
 
 benchmarks :: Benchmark
 benchmarks = bgroup "BitVector"
@@ -29,7 +33,7 @@ benchmarks = bgroup "BitVector"
     , finiteBitsBench
     , hashableBench
     , semigroupBench
---    , monoFoldableBench
+    , monoFoldableBench
     ]
 
 
@@ -178,14 +182,14 @@ semigroupBench = bgroup "Semigroup"
     ]
   
 
-{-
 monoFoldableBench :: Benchmark
 monoFoldableBench = bgroup "MonoFoldable"
-    [ unaryBenchmark "ofold"      finiteBitSize
-    , unaryBenchmark "countLeadingZeros"  countLeadingZeros
-    , unaryBenchmark "countTrailingZeros" countLeadingZeros
+    [ fold1Benchmark "ofoldr1Ex"  ofoldr1Ex
+    , fold1Benchmark "ofoldl1Ex'" ofoldl1Ex'
+    ,   mapBenchmark "omap"       omap
+    , queryBenchmark "oall"       oall 
+    , queryBenchmark "oany"       oany 
     ]
--}
 
 
 constantNumberTimeBenchmark :: (NFData a, NFData b) => String -> (Integer -> a) -> (Integer -> a -> b) -> Benchmark
@@ -232,6 +236,42 @@ indexingBenchmark label op = bgroup label $ generateBenchmark <$> combinations
         (c, d) <- nubBy (\x y -> snd x == snd y) [("first", 0), ("middle", bitCount `div` 2), ("last", bitCount - 1)]
         let e = force (a,b,c,d)
         [e]
+
+
+fold1Benchmark :: String -> ((Bool -> Bool -> Bool) -> BitVector -> Bool) -> Benchmark
+fold1Benchmark label fold1Fun = bgroup label $ generateBenchmark <$> combinations
+  where
+    generateBenchmark (intLabel, intValue, lOp) = bench message $ nf id target
+      where
+        message  = unwords ["fold1", getBinaryLogicalSymbol lOp, intLabel]
+        !op      = getBinaryLogicalOperator lOp
+        !bv      = bvGen intValue
+        target   = fold1Fun op bv
+    combinations = [ (a,b, op) | (a,b) <- magicNumbers, op <- [minBound .. maxBound] ]
+
+
+mapBenchmark :: String -> ((Bool -> Bool) -> BitVector -> BitVector) -> Benchmark
+mapBenchmark label mapFun = bgroup label $ generateBenchmark <$> combinations
+  where
+    generateBenchmark (intLabel, intValue, lOp) = bench message $ nf id target
+      where
+        message  = unwords ["map", getUnaryLogicalSymbol lOp, intLabel]
+        !op      = getUnaryLogicalOperator lOp
+        !bv      = bvGen intValue
+        target   = mapFun op bv
+    combinations = [ (a,b, op) | (a,b) <- magicNumbers, op <- [minBound .. maxBound] ]
+
+
+queryBenchmark :: String -> ((Bool -> Bool) -> BitVector -> Bool) -> Benchmark
+queryBenchmark label mapFun = bgroup label $ generateBenchmark <$> combinations
+  where
+    generateBenchmark (intLabel, intValue, lOp) = bench message $ nf id target
+      where
+        message  = unwords ["query", getUnaryLogicalSymbol lOp, intLabel]
+        !op      = getUnaryLogicalOperator lOp
+        !bv      = bvGen intValue
+        target   = mapFun op bv
+    combinations = [ (a,b, op) | (a,b) <- magicNumbers, op <- [minBound .. maxBound] ]
 
 
 bvGen :: Integer -> BitVector
