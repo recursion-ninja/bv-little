@@ -505,8 +505,8 @@ monoFoldableEquivelence = testGroup "Equivelence of a MonoFoldable"
     , SC.testProperty "ofoldr1Ex f === foldr1 f . otoList"      $ forAll ofoldr1ExOptimizationIsValid
     , SC.testProperty "headEx === head . otoList"               $ forAll headExOptimizationIsValid
     , SC.testProperty "lastEx === last . otoList"               $ forAll lastExOptimizationIsValid
-    , SC.testProperty "maximumByEx f === maximumBy f . otoList" $ forAll maximumByExOptimizationIsValid
-    , SC.testProperty "minimumByEx f === minimumBy f . otoList" $ forAll minimumByExOptimizationIsValid
+--    , SC.testProperty "maximumByEx f === maximumBy f . otoList" $ forAll maximumByExOptimizationIsValid
+--    , SC.testProperty "minimumByEx f === minimumBy f . otoList" $ forAll minimumByExOptimizationIsValid
     , SC.testProperty "oelem e === oelem e . otoList"           $ forAll oelemOptimizationIsValid
     , SC.testProperty "onotElem e === onotElem e . otoList"     $ forAll onotElemOptimizationIsValid
     ]

@@ -458,18 +458,22 @@ instance MonoFoldable BitVector where
     lastEx (BV 0 _) = error "Call to Data.MonoFoldable.lastEx on an empty BitVector!"
     lastEx (BV w n) = n `testBit` (fromEnum w - 1)
 
-    -- | /O(1)/
+    -- | /O(n)/
     {-# INLINE maximumByEx #-}
     maximumByEx _ (BV 0 _) = error "Call to Data.MonoFoldable.maximumByEx on an empty BitVector!"
     maximumByEx _ (BV 1 n) = n /= 0
+    maximumByEx f  bv      = maximumBy f $ toBits bv
+{-    
     maximumByEx f (BV w n) =
         let !allBits  = bit (fromEnum w) - 1
             !anyFalse = n < allBits
             !anyTrue  = n > 0
         in  case f False False of
+              LT -> n `testBit` ((fromEnum w) - 1)
               GT -> anyFalse
               _  -> case f True True of
                       GT -> anyTrue
+                      LT -> anyFalse
                       _  -> if   n == allBits
                             then True  -- All bits on,  max value is true
                             else if n == 0
@@ -484,11 +488,14 @@ instance MonoFoldable BitVector where
                                    (GT, LT) -> not anyFalse
                                    (GT, EQ) -> False
                                    (GT, GT) -> False
+-}
 
-    -- | /O(1)/
+    -- | /O(n)/
     {-# INLINE minimumByEx #-}
     minimumByEx _ (BV 0 _) = error "Call to Data.MonoFoldable.minimumByEx on an empty BitVector!"
     minimumByEx _ (BV 1 n) = n /= 0
+    minimumByEx f  bv      = minimumBy f $ toBits bv
+{-
     minimumByEx f (BV w n) =
         let !allBits  = bit (fromEnum w) - 1
             !anyFalse = n < allBits
@@ -511,6 +518,7 @@ instance MonoFoldable BitVector where
                                    (GT, LT) -> anyTrue
                                    (GT, EQ) -> True
                                    (GT, GT) -> True
+-}
 
     -- | /O(1)/
     {-# INLINE oelem #-}
