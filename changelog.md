@@ -1,6 +1,13 @@
 ### Unreleased Changes
 
-  * Updated `length64`, `oall`, `oany`, `omap`, `maximumByEx`, & `minimumByEx`, oelem, onotElem to be constant time
+  * Updated the following functions to be constant time:
+    * `omap`
+    * `olength64`
+    * `oall`
+    * `oany`
+    * `ofoldr1Ex`
+    * `oelem`
+    * `onotElem`
 
   * Added explicit recursion to monomorphic folds to improve time and space performance
 
