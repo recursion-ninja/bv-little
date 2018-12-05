@@ -375,6 +375,15 @@ instance MonoFoldable BitVector where
         
     {-# INLINE ofoldMap1Ex #-}
     ofoldMap1Ex _ (BV 0 _) = Prelude.error "Data.MonoTraversable.ofoldMap1Ex on an empty BitVector!"
+    ofoldMap1Ex f (BV w n) = go 0
+      where
+        !m    = fromEnum w
+        go !c
+          | c >= m - 1 = f $ n `testBit` c
+          | otherwise  = let !j = c + 1
+                             !b = n `testBit` c
+                         in  f b <> go j
+{-                    
     ofoldMap1Ex f (BV w n) = go m
       where
         !m    = fromEnum w
@@ -383,6 +392,7 @@ instance MonoFoldable BitVector where
                     !j = c - 1
                     !b = n `testBit` i
                 in  f b <> go j
+-}
 
     -- | /O(1)/
     {-# INLINE ofoldr1Ex #-}
@@ -398,7 +408,9 @@ instance MonoFoldable BitVector where
           (False, False, False, False) -> False
           -- Logical NOR
           (False, False, False, True ) -> let !lz = toEnum $ countLeadingZeros bv
-                                          in  if w - lz == 1 then even lz else odd lz
+                                          in  if (w - lz) == 1 || n == 0
+                                              then even lz
+                                              else odd lz
           -- Converse non-implication
           --   Only True when of the form <0+1>
           (False, False, True , False) -> n == bit (fromEnum w - 1)

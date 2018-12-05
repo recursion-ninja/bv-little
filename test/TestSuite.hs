@@ -227,8 +227,8 @@ monoFoldableProperties = testGroup "Properties of MonoFoldable"
     , QC.testProperty "ofoldl' f z t === appEndo (getDual (ofoldMap (Dual . Endo . flip f) t)) z" testFoldlFoldMap
     , QC.testProperty "ofoldr f z === ofoldr f z . otoList" testFoldr
     , QC.testProperty "ofoldl' f z === ofoldl' f z . otoList" testFoldl
-    , QC.testProperty "ofoldr1Ex f z === ofoldr1Ex f z . otoList" testFoldr1
-    , QC.testProperty "ofoldl1Ex' f z === ofoldl1Ex' f z . otoList" testFoldl1
+    , QC.testProperty "ofoldr1Ex f === foldr1 f . otoList" testFoldr1
+    , QC.testProperty "ofoldl1Ex' f === foldl1 f . otoList" testFoldl1
     , QC.testProperty "oall f === getAll . ofoldMap (All . f)" testAll
     , QC.testProperty "oany f === getAny . ofoldMap (Any . f)" testAny
     , QC.testProperty "olength === length . otoList" testLength
@@ -254,17 +254,17 @@ monoFoldableProperties = testGroup "Properties of MonoFoldable"
     testFoldl (Blind f) z bv =
         ofoldl' f z bv === (ofoldl' f z . otoList) bv
 
-    testFoldr1 :: Blind (Bool -> Bool -> Bool) -> BitVector -> Property
---    testFoldr1 :: LogicalOperator -> BitVector -> Property
-    testFoldr1 (Blind f) bv =
---    testFoldr1 x bv =
-        (not . onull) bv  ==> ofoldr1Ex f bv === (ofoldr1Ex f . otoList) bv
---      where
---        f = getOperator x
+--    testFoldr1 :: Blind (Bool -> Bool -> Bool) -> BitVector -> Property
+    testFoldr1 :: BinaryLogicalOperator -> BitVector -> Property
+--    testFoldr1 (Blind f) bv =
+    testFoldr1 x bv =
+        (not . onull) bv  ==> ofoldr1Ex f bv === (foldr1 f . otoList) bv
+      where
+        f = getBinaryLogicalOperator x
 
     testFoldl1 :: Blind (Bool -> Bool -> Bool) -> BitVector -> Property
     testFoldl1 (Blind f) bv =
-        (not . onull) bv  ==> ofoldl1Ex' f bv === (ofoldl1Ex' f . otoList) bv
+        (not . onull) bv  ==> ofoldl1Ex' f bv === (foldl1 f . otoList) bv
 
     testAll :: Blind (Bool -> Bool) -> BitVector -> Property
     testAll (Blind f) bv =
