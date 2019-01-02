@@ -1,6 +1,6 @@
 ### Unreleased Changes
 
-  * None
+  * Added textshow instance and tests for it
 
 
 ### [v0.1.2][1]
