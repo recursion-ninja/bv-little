@@ -395,7 +395,7 @@ instance Show BitVector where
 
 
 -- |
--- /Since: ?.?.?.? /
+-- /Since: 1.0.0.0 /
 instance TextShow BitVector where
 
     showb (BV w n) = mconcat [ "[", showb w, "]", showb n ]

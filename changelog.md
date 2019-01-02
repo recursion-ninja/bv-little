@@ -1,4 +1,4 @@
-### Unreleased Changes
+### Unreleased Changes (1.0.0.0)
 
   * Added textshow instance and tests for it
 
