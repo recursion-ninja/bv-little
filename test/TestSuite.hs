@@ -20,6 +20,7 @@ import Data.Semigroup
 import Test.Tasty
 import Test.Tasty.HUnit
 import Test.Tasty.QuickCheck hiding ((.&.))
+import TextShow (TextShow(showb), toString)
 
 
 main :: IO ()
@@ -39,6 +40,7 @@ testSuite = testGroup "BitVector tests"
     , orderingProperties
     , semigroupProperties
     , showProperties
+    , textshowProperties
     , bitVectorProperties
     ]
 
@@ -391,7 +393,17 @@ showProperties = testGroup "Properties of Show"
     nonNullString :: BitVector -> Bool
     nonNullString =
         not . null . show
-    
+
+textshowProperties :: TestTree
+textshowProperties = testGroup "Properties of TextShow"
+    [ testProperty "textshow and show result agree" textshowCoherence
+    ]
+  where
+    textshowCoherence :: BitVector -> Property
+    textshowCoherence bv =
+        (toString . showb $ bv) === show bv
+
+
 
 bitVectorProperties :: TestTree
 bitVectorProperties = testGroup "BitVector properties"
