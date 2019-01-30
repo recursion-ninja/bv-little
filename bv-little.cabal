@@ -44,6 +44,7 @@ library
                     , mono-traversable
                     , primitive
                     , QuickCheck
+                    , text-show
 
   if !impl(ghc >= 8.0)
 
@@ -111,6 +112,7 @@ Test-Suite test-suite
                     , tasty-hunit
                     , tasty-quickcheck
                     , tasty-smallcheck
+                    , text-show
 
   if !impl(ghc >= 8.0)
 

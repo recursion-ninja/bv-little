@@ -1,4 +1,4 @@
-### Unreleased Changes
+### Unreleased Changes (1.0.0.0)
 
   * Updated the following functions to be constant time:
     * `omap`
@@ -10,6 +10,8 @@
     * `onotElem`
 
   * Added explicit recursion to monomorphic folds to improve time and space performance
+
+  * Added TextShow instance and tests for it
 
 
 ### [v0.1.2][1]

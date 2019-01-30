@@ -28,6 +28,7 @@ import           Test.Tasty.QuickCheck hiding ((.&.), forAll, testProperty)
 import qualified Test.Tasty.QuickCheck as QC
 import           Test.Tasty.SmallCheck hiding ((===), (==>), Property, testProperty)
 import qualified Test.Tasty.SmallCheck as SC
+import           TextShow (TextShow(showb), toString)
 
 
 main :: IO ()
@@ -47,6 +48,7 @@ testSuite = testGroup "BitVector tests"
     , orderingProperties
     , semigroupProperties
     , showProperties
+    , textshowProperties
     , bitVectorProperties
     , monoFunctorEquivelence
     , monoFoldableEquivelence
@@ -146,7 +148,7 @@ finiteBitsTests = testGroup "Properties of FiniteBits"
     [ QC.testProperty "bitSize === finiteBitSize" finiteBitSizeIsBitSize
     , QC.testProperty "bitSizeMaybe === Just . finiteBitSize" finiteBitSizeIsBitSizeMaybe
     , QC.testProperty "countLeadingZeros <= finiteBitSize" finiteBitSizeIsGreaterThanLeadingZeros
-    , QC.testProperty "CountTrailingZeros <= finiteBitSize" finiteBitSizeIsGreaterThanTrailingZeros
+    , QC.testProperty "countTrailingZeros <= finiteBitSize" finiteBitSizeIsGreaterThanTrailingZeros
     , QC.testProperty "length . toBits === finiteBitSize" finiteBitSizeIsBitLength
     , QC.testProperty "length . takeWhile not === countLeadingZeros . fromBits" countLeadingZeroAndFromBits
     , QC.testProperty "length . takeWhile not . toBits === countLeadingZeros" countLeadingZeroAndToBits
@@ -414,7 +416,17 @@ showProperties = testGroup "Properties of Show"
     nonNullString :: BitVector -> Bool
     nonNullString =
         not . null . show
-    
+
+textshowProperties :: TestTree
+textshowProperties = testGroup "Properties of TextShow"
+    [ QC.testProperty "textshow and show result agree" textshowCoherence
+    ]
+  where
+    textshowCoherence :: BitVector -> Property
+    textshowCoherence bv =
+        (toString . showb $ bv) === show bv
+
+
 
 bitVectorProperties :: TestTree
 bitVectorProperties = testGroup "BitVector properties"

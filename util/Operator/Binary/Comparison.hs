@@ -36,7 +36,7 @@ comparatorList = do
     x <- [minBound .. maxBound]
     y <- [minBound .. maxBound]
     z <- [minBound .. maxBound]
-    pure . CO $ \a b -> if      not a && not b then w
+    pure . CO $ \a b -> if not a && not b then w
                    else if not a &&     b then x
                    else if     a && not b then y
                    else {-     a &&     b   -} z

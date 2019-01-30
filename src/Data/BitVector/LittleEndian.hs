@@ -36,7 +36,7 @@
 --
 -----------------------------------------------------------------------------
 
-{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric, MagicHash #-}
+{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric, MagicHash, OverloadedStrings #-}
 {-# LANGUAGE Trustworthy, TypeFamilies #-}
 
 module Data.BitVector.LittleEndian
@@ -73,6 +73,7 @@ import GHC.Integer.GMP.Internals
 import GHC.Integer.Logarithms
 import GHC.Natural
 import Test.QuickCheck (Arbitrary(..), CoArbitrary(..), NonNegative(..), suchThat, variant)
+import TextShow(TextShow(showb))
 
 
 -- |
@@ -620,6 +621,13 @@ instance Semigroup BitVector where
 instance Show BitVector where
 
     show (BV w n) = mconcat [ "[", show w, "]", show n ]
+
+
+-- |
+-- /Since: 1.0.0.0 /
+instance TextShow BitVector where
+
+    showb (BV w n) = mconcat [ "[", showb w, "]", showb n ]
 
 
 -- |
