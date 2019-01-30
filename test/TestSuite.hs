@@ -18,6 +18,7 @@ import           Data.Hashable
 import           Data.List.NonEmpty (NonEmpty(..))
 import           Data.Monoid ()
 import           Data.MonoTraversable
+import           Data.MonoTraversable.Keys
 import           Data.Semigroup
 import           Operator.Binary.Comparison
 import           Operator.Binary.Logical
@@ -42,8 +43,11 @@ testSuite = testGroup "BitVector tests"
     , hashableTests
     , monoFunctorProperties
     , monoFoldableProperties
-    , monoidProperties
+    , monoFoldableWithKeyProperties
+    , monoKeyedProperties
     , monoTraversableProperties
+    , monoTraversableWithKeyProperties
+    , monoidProperties
     , normalFormDataProperties
     , orderingProperties
     , semigroupProperties
@@ -297,29 +301,59 @@ monoFoldableProperties = testGroup "Properties of MonoFoldable"
         oelem e bv === (not . onotElem e) bv
 
 
-monoidProperties :: TestTree
-monoidProperties = testGroup "Properties of a Monoid"
-    [ QC.testProperty "left identity"   leftIdentity
-    , QC.testProperty "right identity" rightIdentity
-    , QC.testProperty "mempty is associative" operationAssocativity
-    , QC.testProperty "mconcat === foldr (<>) mempty" foldableApplication
+monoFoldableWithKeyProperties :: TestTree
+monoFoldableWithKeyProperties = testGroup "Properties of MonoFoldableWithKey"
+    [ QC.testProperty "otoKeyedList === zip [0..] . otoList" testNaturalKeyedList
+    , QC.testProperty "ofoldMapWithKey (const f) === ofoldMap f" testConstantFoldMap
+    , QC.testProperty "ofoldrWithKey (const f) === ofoldr f" testConstantFoldr
+    , QC.testProperty "ofoldlWithKey (const f) === ofoldl f" testConstantFoldl
+    , QC.testProperty "ofoldMapWithKey f === foldMap (uncurry f) . otoKeyedList" testUncurriedFoldMap
+    , QC.testProperty "ofoldrWithKey f === foldr (uncurry f) . otoKeyedList" testUncurriedFoldr
+    , QC.testProperty "ofoldlWithKey f === foldl (uncurry f) . otoKeyedList" testUncurriedFoldl
     ]
   where
-    leftIdentity :: BitVector -> Property
-    leftIdentity a =
-        mempty `mappend` a === a
+    testNaturalKeyedList :: BitVector -> Property
+    testNaturalKeyedList bv =
+        otoKeyedList bv === (zip [0..] . otoList) bv
 
-    rightIdentity :: BitVector -> Property
-    rightIdentity a =
-        a `mappend` mempty === a
+    testConstantFoldMap :: Blind (Bool -> [Word]) -> BitVector -> Property
+    testConstantFoldMap (Blind f) bv =
+        ofoldMapWithKey (const f) bv === ofoldMap f bv
 
-    operationAssocativity :: BitVector -> BitVector -> BitVector -> Property
-    operationAssocativity a b c =
-        a `mappend` (b `mappend` c) === (a `mappend` b) `mappend` c
+    testConstantFoldr :: Blind (Bool -> Word -> Word) -> Word -> BitVector -> Property
+    testConstantFoldr (Blind f) e bv =
+        ofoldrWithKey (const f) e bv === ofoldr f e bv
 
-    foldableApplication :: [BitVector] -> Property
-    foldableApplication bvs = 
-        mconcat bvs === foldr mappend mempty bvs
+    testConstantFoldl :: Blind (Word -> Bool -> Word) -> Word -> BitVector -> Property
+    testConstantFoldl (Blind f) e bv =
+        ofoldlWithKey (\a -> const (f a)) e bv === ofoldl' f e bv
+
+    testUncurriedFoldMap :: Blind (Word -> Bool -> [Word]) -> BitVector -> Property
+    testUncurriedFoldMap (Blind f) bv =
+        ofoldMapWithKey f bv === (foldMap (uncurry f) . otoKeyedList) bv
+
+    testUncurriedFoldr :: Blind (Word -> Bool -> Word -> Word) -> Word -> BitVector -> Property
+    testUncurriedFoldr (Blind f) e bv =
+        ofoldrWithKey f e bv === (foldr (uncurry f) e . otoKeyedList) bv
+
+    testUncurriedFoldl :: Blind (Word -> Word -> Bool -> Word) -> Word -> BitVector -> Property
+    testUncurriedFoldl (Blind f) e bv =
+        ofoldlWithKey f e bv === (foldl (\a -> uncurry (f a)) e . otoKeyedList) bv
+
+
+monoKeyedProperties :: TestTree
+monoKeyedProperties = testGroup "Properites of a MonoKeyed"
+    [ QC.testProperty "omapWithKey (const id) === id" omapId
+    , QC.testProperty "omapWithKey (\\k -> f k . g k)  === omapWithKey f . omapWithKey g" omapComposition
+    ]
+  where
+    omapId :: BitVector -> Property
+    omapId bv =
+        omapWithKey (const id) bv === id bv
+
+    omapComposition :: Blind (Word -> Bool -> Bool) -> Blind (Word -> Bool -> Bool) -> BitVector -> Property
+    omapComposition (Blind f) (Blind g) bv =
+        omapWithKey (\k -> f k . g k) bv === (omapWithKey f . omapWithKey g) bv
 
 
 monoTraversableProperties :: TestTree
@@ -345,6 +379,56 @@ monoTraversableProperties = testGroup "Properties of MonoTraversable"
     testDefinitionEquality :: Blind (Bool -> Maybe Bool) -> BitVector -> Property
     testDefinitionEquality (Blind f) bv =
         otraverse f bv === omapM f bv
+
+
+monoTraversableWithKeyProperties :: TestTree
+monoTraversableWithKeyProperties = testGroup "Properties of MonoTraversableWithKey"
+    [ QC.testProperty "t . otraverseWithKey f === otraverseWithKey (\\k -> t . f k)" testNaturality
+    , QC.testProperty "otraverseWithKey (const Identity) === Identity" testIdentity
+    , QC.testProperty "otraverseWithKey (\\k -> Compose . fmap (g k) . f k) === Compose . fmap (otraverseWithKey g) . otraverseWithKey f" testComposition
+    , QC.testProperty "otraverseWithKey === omapWithKeyM" testDefinitionEquality
+    ]
+  where
+    testNaturality ::  Blind (Word -> Bool -> [Bool]) -> BitVector -> Property
+    testNaturality (Blind f) bv =
+        (headMay . otraverseWithKey f) bv === otraverseWithKey (\k -> headMay . f k) bv
+
+    testIdentity :: BitVector -> Property
+    testIdentity bv =
+        otraverseWithKey (const Identity) bv === Identity bv
+
+    testComposition :: Blind (Word -> Bool -> Either Word Bool) -> Blind (Word -> Bool -> Maybe Bool) -> BitVector -> Property
+    testComposition (Blind f) (Blind g) bv =
+        otraverseWithKey (\k -> Compose . fmap (g k) . (f k)) bv === (Compose . fmap (otraverseWithKey g) . otraverseWithKey f) bv
+
+    testDefinitionEquality :: Blind (Word -> Bool -> Maybe Bool) -> BitVector -> Property
+    testDefinitionEquality (Blind f) bv =
+        otraverseWithKey f bv === omapWithKeyM f bv
+
+
+monoidProperties :: TestTree
+monoidProperties = testGroup "Properties of a Monoid"
+    [ QC.testProperty "left identity"   leftIdentity
+    , QC.testProperty "right identity" rightIdentity
+    , QC.testProperty "mempty is associative" operationAssocativity
+    , QC.testProperty "mconcat === foldr (<>) mempty" foldableApplication
+    ]
+  where
+    leftIdentity :: BitVector -> Property
+    leftIdentity a =
+        mempty `mappend` a === a
+
+    rightIdentity :: BitVector -> Property
+    rightIdentity a =
+        a `mappend` mempty === a
+
+    operationAssocativity :: BitVector -> BitVector -> BitVector -> Property
+    operationAssocativity a b c =
+        a `mappend` (b `mappend` c) === (a `mappend` b) `mappend` c
+
+    foldableApplication :: [BitVector] -> Property
+    foldableApplication bvs = 
+        mconcat bvs === foldr mappend mempty bvs
 
 
 normalFormDataProperties :: TestTree

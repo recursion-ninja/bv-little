@@ -41,7 +41,9 @@ library
                     , deepseq
                     , hashable
                     , integer-gmp
+                    , keys
                     , mono-traversable
+                    , mono-traversable-keys
                     , primitive
                     , QuickCheck
                     , text-show
@@ -106,6 +108,7 @@ Test-Suite test-suite
                     , deepseq
                     , hashable
                     , mono-traversable
+                    , mono-traversable-keys
                     , QuickCheck
                     , smallcheck       >= 1.1.5
                     , tasty

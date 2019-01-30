@@ -60,9 +60,11 @@ import Data.Bits
 import Data.Data
 import Data.Foldable
 import Data.Hashable
+import Data.Key
 import Data.List.NonEmpty (NonEmpty(..))
 import Data.Monoid        ()
 import Data.MonoTraversable
+import Data.MonoTraversable.Keys
 import Data.Ord
 import Data.Primitive.ByteArray
 import Data.Semigroup
@@ -91,6 +93,11 @@ data  BitVector
 -- |
 -- /Since: 0.1.0.0/
 type instance Element BitVector = Bool
+
+
+-- |
+-- /Since: 0.1.0.0/
+type instance MonoKey BitVector = Word
 
 
 -- |
@@ -545,6 +552,49 @@ instance MonoFoldable BitVector where
 
 
 -- |
+-- /Since: 1.0.0/
+instance MonoFoldableWithKey BitVector where
+
+    {-# INLINE otoKeyedList #-}
+    otoKeyedList (BV w n) = 
+      let go  0 = []
+          go !c = let !k = w - c
+                      !v = n `testBit` fromEnum k
+                      !i = c - 1
+                  in  (k, v) : go i
+      in  go w
+
+    {-# INLINE ofoldMapWithKey #-}
+    ofoldMapWithKey f (BV w n) =
+      let go  0 = mempty
+          go !c = let !k = w - c
+                      !v = n `testBit` fromEnum k
+                      !i = c - 1
+                      !m = f k v
+                  in  m `mappend` go i
+      in  go w
+
+    {-# INLINE ofoldrWithKey #-}
+    ofoldrWithKey f e (BV w n) =
+      let go  0 acc = acc
+          go !c acc = let !k = w - c
+                          !i = c - 1
+                          !b = n `testBit` fromEnum k
+                      in  f k b $ go i acc
+      in  go w e
+
+    {-# INLINE ofoldlWithKey #-}
+    ofoldlWithKey f e (BV w n) = go w e
+      where
+        go  0 acc = acc
+        go !c acc = let !k = w - c
+                        !i = c - 1
+                        !b = n `testBit` fromEnum k
+                        !a = f acc k b
+                    in  go i a
+
+
+-- |
 -- /Since: 0.1.0.0/
 instance MonoFunctor BitVector where
 
@@ -560,6 +610,23 @@ instance MonoFunctor BitVector where
 
 
 -- |
+-- /Since: 1.0.0/
+instance MonoKeyed BitVector where
+
+    {-# INLINE omapWithKey #-}
+    omapWithKey f (BV w n) =
+      let go  0 acc = acc
+          go !c acc = let !k = w - c
+                          !i = fromEnum k
+                          !j = c - 1
+                          !b = n `testBit` i
+                          !a | f k b     = acc `setBit` i
+                             | otherwise = acc
+                      in  go j a
+      in  go w $ BV w 0
+
+
+-- |
 -- /Since: 0.1.0.0/
 instance MonoTraversable BitVector where
 
@@ -570,6 +637,14 @@ instance MonoTraversable BitVector where
     omapM = otraverse
 
 
+-- |
+-- /Since: 1.0.0/
+instance MonoTraversableWithKey BitVector where
+
+    {-# INLINE otraverseWithKey #-}
+    otraverseWithKey f = fmap fromBits . traverseWithKey (\k -> f (toEnum k)) . toBits
+
+    
 -- |
 -- /Since: 0.1.0.0/
 instance NFData BitVector where
