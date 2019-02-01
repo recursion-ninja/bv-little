@@ -41,12 +41,15 @@ testSuite = testGroup "BitVector tests"
     [ bitsTests
     , finiteBitsTests
     , hashableTests
+    , monoAdjustableProperties
     , monoFunctorProperties
     , monoFoldableProperties
     , monoFoldableWithKeyProperties
     , monoKeyedProperties
     , monoTraversableProperties
     , monoTraversableWithKeyProperties
+    , monoZipProperties
+    , monoZipWithKeyProperties
     , monoidProperties
     , normalFormDataProperties
     , orderingProperties
@@ -56,6 +59,7 @@ testSuite = testGroup "BitVector tests"
     , bitVectorProperties
     , monoFunctorEquivelence
     , monoFoldableEquivelence
+    , monoZipEquivelence
     ]
 
 
@@ -211,7 +215,38 @@ hashableTests = testGroup "Properties of Hashable"
     differentSaltsDifferentHashes bv salt1 salt2 =
         salt1 /= salt2 ==> (hashWithSalt salt1 bv) /= (hashWithSalt salt2 bv)
  
-    
+
+
+monoAdjustableProperties :: TestTree
+monoAdjustableProperties = testGroup "Properites of a MonoAdjustable"
+    [ QC.testProperty "oadjust id k === id" oadjustId
+    , QC.testProperty "oadjust (f . g) k === oadjust f k . oadjust g k" oadjustComposition
+    , QC.testProperty "oadjust f k === omapWithKey (\\i -> if i == k then f else id)" omapConditionality
+    , QC.testProperty "oreplace k v === oreplace k v . oadjust f k" oreplaceNullification
+    , QC.testProperty "oreplace (f v) k === oadjust f k . oreplace k v" oreplaceApplication
+    ]
+  where
+    oadjustId :: Word -> BitVector -> Property
+    oadjustId k bv = 
+        oadjust id k bv === id bv
+
+    oadjustComposition :: Blind (Bool -> Bool) -> Blind (Bool -> Bool) -> Word -> BitVector -> Property
+    oadjustComposition (Blind f) (Blind g) k bv =
+        oadjust (f . g) k bv === (oadjust f k . oadjust g k) bv
+
+    omapConditionality :: Blind (Bool -> Bool) -> Word -> BitVector -> Property
+    omapConditionality (Blind f) k bv =
+        oadjust f k bv === omapWithKey (\i -> if i == k then f else id) bv
+
+    oreplaceNullification :: Blind (Bool -> Bool) -> Word -> Bool -> BitVector -> Property
+    oreplaceNullification (Blind f) k v bv =
+        oreplace k v bv === (oreplace k v . oadjust f k) bv
+
+    oreplaceApplication :: Blind (Bool -> Bool) -> Word -> Bool -> BitVector -> Property
+    oreplaceApplication (Blind f) k v bv =
+        oreplace k (f v) bv === (oadjust f k . oreplace k v) bv
+
+
 monoFunctorProperties :: TestTree
 monoFunctorProperties = testGroup "Properites of a MonoFunctor"
     [ QC.testProperty "omap id === id" omapId
@@ -406,6 +441,39 @@ monoTraversableWithKeyProperties = testGroup "Properties of MonoTraversableWithK
         otraverseWithKey f bv === omapWithKeyM f bv
 
 
+monoZipProperties :: TestTree
+monoZipProperties = testGroup "Properites of a MonoZip"
+    [ QC.testProperty "ozipWith const u u === ozipWith (flip const) u u === u" ozipWithConst
+    , QC.testProperty "ozipWith (flip f) x y === ozipWith f y x" ozipWithTransposition
+    , QC.testProperty "ozipWith (\\a b -> f (g a) (h b)) x y === ozipWith f (omap g x) (omap h y)" ozipWithComposition
+    ]
+  where
+    ozipWithConst :: BitVector -> Property
+    ozipWithConst u =
+        ozipWith const u u === u .&&. ozipWith (flip const) u u === u
+
+    ozipWithTransposition :: Blind (Bool -> Bool -> Bool) -> BitVector -> BitVector -> Property
+    ozipWithTransposition (Blind f) x y =
+        ozipWith (flip f) x y === ozipWith f y x
+
+    ozipWithComposition
+      :: Blind (Bool -> Bool -> Bool)
+      -> Blind (Bool -> Bool)
+      -> Blind (Bool -> Bool) -> BitVector -> BitVector -> Property
+    ozipWithComposition (Blind f) (Blind g) (Blind h) x y =
+        ozipWith (\a b -> f (g a) (h b)) x y === ozipWith f (omap g x) (omap h y)
+
+
+monoZipWithKeyProperties :: TestTree
+monoZipWithKeyProperties = testGroup "Properites of a MonoZipWithKey"
+    [ QC.testProperty "ozipWithKey (const f) === ozipWith f" ozipWithKeyConst
+    ]
+  where
+    ozipWithKeyConst :: Blind (Bool -> Bool -> Bool) -> BitVector -> BitVector -> Property
+    ozipWithKeyConst (Blind f) x y =
+        ozipWithKey (const f) x y === ozipWith f x y
+
+
 monoidProperties :: TestTree
 monoidProperties = testGroup "Properties of a Monoid"
     [ QC.testProperty "left identity"   leftIdentity
@@ -598,7 +666,8 @@ monoFoldableEquivelence :: TestTree
 monoFoldableEquivelence = testGroup "Equivelence of a MonoFoldable"
     [ SC.testProperty "oall f === all f . otoList"              $ forAll oallOptimizationIsValid
     , SC.testProperty "oany f === any f . otoList"              $ forAll oanyOptimizationIsValid
-    , SC.testProperty "ofoldr1Ex f === foldr1 f . otoList"      $ forAll ofoldr1ExOptimizationIsValid
+    , SC.testProperty "ofoldr1Ex  f === foldr1 f . otoList"     $ forAll ofoldr1ExOptimizationIsValid
+    , SC.testProperty "ofold'1Ex' f === foldl1 f . otoList"     $ forAll ofoldl1ExOptimizationIsValid
     , SC.testProperty "headEx === head . otoList"               $ forAll headExOptimizationIsValid
     , SC.testProperty "lastEx === last . otoList"               $ forAll lastExOptimizationIsValid
 --    , SC.testProperty "maximumByEx f === maximumBy f . otoList" $ forAll maximumByExOptimizationIsValid
@@ -622,6 +691,13 @@ monoFoldableEquivelence = testGroup "Equivelence of a MonoFoldable"
     ofoldr1ExOptimizationIsValid :: (BinaryLogicalOperator, VisualBitVector) -> Bool
     ofoldr1ExOptimizationIsValid (y, x) =
         isZeroVector bv || (ofoldr1Ex op) bv == (foldr1 op . otoList) bv
+      where
+        bv = getBitVector x
+        op = getBinaryLogicalOperator  y
+
+    ofoldl1ExOptimizationIsValid :: (BinaryLogicalOperator, VisualBitVector) -> Bool
+    ofoldl1ExOptimizationIsValid (y, x) =
+        isZeroVector bv || (ofoldl1Ex' op) bv == (foldl1 op . otoList) bv
       where
         bv = getBitVector x
         op = getBinaryLogicalOperator  y
@@ -661,3 +737,18 @@ monoFoldableEquivelence = testGroup "Equivelence of a MonoFoldable"
     onotElemOptimizationIsValid (x, e) = (onotElem e) bv == (onotElem e . otoList) bv
       where
         bv = getBitVector x
+
+
+monoZipEquivelence :: TestTree
+monoZipEquivelence = testGroup "Equivelence of a MonoZip"
+    [ SC.testProperty "ozipWith f x === fromBits . zipWith f . (toBits x) . toBits" $ forAll omapOptimizationIsValid
+    ]
+  where
+    omapOptimizationIsValid :: (BinaryLogicalOperator, VisualBitVectorSmall, VisualBitVectorSmall) -> Bool
+    omapOptimizationIsValid (f, x, y) = ozipWith op lhs rhs == (fromBits . zipWith op (toBits lhs) . toBits) rhs
+      where
+        op  = getBinaryLogicalOperator f
+        lhs = getBitVector x
+        rhs = getBitVector y
+
+

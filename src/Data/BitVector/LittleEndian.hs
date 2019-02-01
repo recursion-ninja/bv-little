@@ -295,6 +295,31 @@ instance Monoid BitVector where
 
 
 -- |
+-- /Since: 1.0.0/
+instance MonoAdjustable BitVector where
+
+    -- | /O(1)/
+    {-# INLINE oadjust #-}
+    oadjust f k bv@(BV w n)
+      | k >= w    = bv
+      | v == b    = bv
+      | otherwise = BV w $ n `complementBit` i
+      where
+        !i = fromEnum k
+        !v = n `testBit` i
+        !b = f v
+
+    -- | /O(1)/
+    {-# INLINE oreplace #-}
+    oreplace k v bv@(BV w n)
+      | k >= w    = bv
+      | v         = BV w $ n   `setBit` i
+      | otherwise = BV w $ n `clearBit` i
+      where
+        !i = fromEnum k
+
+
+-- |
 -- /Since: 0.1.0.0/
 instance MonoFoldable BitVector where
 
@@ -415,10 +440,10 @@ instance MonoFoldable BitVector where
           -- Contradiction (Const False)
           (False, False, False, False) -> False
           -- Logical NOR
-          (False, False, False, True ) -> let !lz = toEnum $ countLeadingZeros bv
-                                          in  if (w - lz) == 1 || n == 0
-                                              then even lz
-                                              else odd lz
+          (False, False, False, True ) -> let !lzs = toEnum $ countLeadingZeros bv
+                                          in  if (w - lzs) == 1 || n == 0
+                                              then even lzs
+                                              else odd  lzs
           -- Converse non-implication
           --   Only True when of the form <0+1>
           (False, False, True , False) -> n == bit (fromEnum w - 1)
@@ -432,7 +457,7 @@ instance MonoFoldable BitVector where
           (False, True , False, True ) -> let !v = n `testBit` (fromEnum w - 1)
                                           in  if even w then not v else v
           -- Logical XOR
-          (False, True , True , False) -> odd  $ popCount n
+          (False, True , True , False) -> odd $ popCount n
           -- Logical NAND
           (False, True , True , True ) -> let !los = countLeadingZeros $ complement bv
                                               !x   = bit (fromEnum w - 1) - 1
@@ -465,8 +490,60 @@ instance MonoFoldable BitVector where
     -- | /O(n)/
     {-# INLINE ofoldl1Ex' #-}
     -- TODO: Optimize this like ofoldl1Ex'
-    ofoldl1Ex' _ (BV 0 _) = Prelude.error "Data.MonoTraversable.ofoldl1Ex' on an empty BitVector!"
-    ofoldl1Ex' f bv = ofoldl1Ex' f $ toBits bv
+    ofoldl1Ex' _    (BV 0 _) = Prelude.error "Data.MonoTraversable.ofoldl1Ex' on an empty BitVector!"
+    ofoldl1Ex' _    (BV 1 n) = n > 0
+--    ofoldl1Ex' f bv = ofoldl1Ex' f $ toBits bv
+    ofoldl1Ex' f bv@(BV w n) =
+        -- See the following entry for explanation:
+        -- https://en.wikipedia.org/wiki/Truth_table#Truth_table_for_all_binary_logical_operators
+        --
+        -- cases of f p q
+        case (f True True, f True False, f False True, f False False) of
+          -- Contradiction (Const False)
+          (False, False, False, False) -> False
+          -- Logical NOR
+          (False, False, False, True ) -> let !tzs = toEnum $ countTrailingZeros bv
+                                          in  if (w - tzs) == 1 || n == 0
+                                              then even tzs
+                                              else odd  tzs
+          -- Converse non-implication
+          (False, False, True , False) -> let !tzs = countTrailingZeros $ complement bv
+                                          in  odd tzs
+          -- NOT p
+          (False, False, True , True ) -> even w == even n
+          -- Logical non-implication
+          (False, True , False, False) -> n == 1
+          -- NOT q
+          (False, True , False, True ) -> not $ n `testBit` (fromEnum w - 1)
+          -- Logical XOR
+          (False, True , True , False) -> odd  $ popCount n
+          -- Logical NAND
+          (False, True , True , True ) -> let !tos = countTrailingZeros $ complement bv
+                                              !x   = bit (fromEnum w) - 1
+                                              !y   = bit (fromEnum w) - 2
+                                          in  if n == x || n == y
+                                              then odd  tos
+                                              else even tos
+          -- Logical AND
+          (True , False, False, False) -> n == bit (fromEnum w) - 1
+          -- Logical XNOR
+          (True , False, False, True ) -> let !pc = popCount n
+                                          in  if   even w
+                                              then even pc
+                                              else odd  pc
+          -- Const q
+          (True , False, True , False) -> n `testBit` (fromEnum w - 1)
+          -- Logical implication
+          (True , False, True , True ) -> even $ countTrailingZeros bv
+          -- Const p
+          (True , True , False, False) -> n `testBit` 0
+          -- Converse implication
+          --    only False when of the form <01+>
+          (True , True , False, True ) -> n /= bit (fromEnum w) - 2
+          -- Logical OR
+          (True , True , True , False) -> n > 0
+          -- Constant True
+          (True , True , True , True ) -> True
 
     -- | /O(1)/
     {-# INLINE headEx #-}
@@ -555,6 +632,7 @@ instance MonoFoldable BitVector where
 -- /Since: 1.0.0/
 instance MonoFoldableWithKey BitVector where
 
+    -- | /O(n)/
     {-# INLINE otoKeyedList #-}
     otoKeyedList (BV w n) = 
       let go  0 = []
@@ -564,6 +642,7 @@ instance MonoFoldableWithKey BitVector where
                   in  (k, v) : go i
       in  go w
 
+    -- | /O(n)/
     {-# INLINE ofoldMapWithKey #-}
     ofoldMapWithKey f (BV w n) =
       let go  0 = mempty
@@ -574,6 +653,7 @@ instance MonoFoldableWithKey BitVector where
                   in  m `mappend` go i
       in  go w
 
+    -- | /O(n)/
     {-# INLINE ofoldrWithKey #-}
     ofoldrWithKey f e (BV w n) =
       let go  0 acc = acc
@@ -583,6 +663,7 @@ instance MonoFoldableWithKey BitVector where
                       in  f k b $ go i acc
       in  go w e
 
+    -- | /O(n)/
     {-# INLINE ofoldlWithKey #-}
     ofoldlWithKey f e (BV w n) = go w e
       where
@@ -611,8 +692,27 @@ instance MonoFunctor BitVector where
 
 -- |
 -- /Since: 1.0.0/
+instance MonoIndexable BitVector where
+
+    -- | /O(1)/
+    {-# INLINE oindex #-}
+    oindex bv@(BV w _) i =
+        case i `olookup` bv of
+          Just v  -> v
+          Nothing -> error $ mconcat
+            [ "Data.BitVector.LittleEndian.oindex: "
+            , "The index "
+            , show i
+            , " was greater than or equal to the length of the bit vector "
+            , show w
+            ]
+
+
+-- |
+-- /Since: 1.0.0/
 instance MonoKeyed BitVector where
 
+    -- | /O(n)/
     {-# INLINE omapWithKey #-}
     omapWithKey f (BV w n) =
       let go  0 acc = acc
@@ -627,12 +727,25 @@ instance MonoKeyed BitVector where
 
 
 -- |
+-- /Since: 1.0.0/
+instance MonoLookup BitVector where
+
+    -- | /O(1)/
+    {-# INLINE olookup #-}
+    olookup k (BV w n)
+      | k <= w    = Nothing
+      | otherwise = Just $ n `testBit` fromEnum k
+
+
+-- |
 -- /Since: 0.1.0.0/
 instance MonoTraversable BitVector where
 
+    -- | /O(n)/
     {-# INLINE otraverse #-}
     otraverse f = fmap fromBits . traverse f . toBits
 
+    -- | /O(n)/
     {-# INLINE omapM #-}
     omapM = otraverse
 
@@ -641,10 +754,79 @@ instance MonoTraversable BitVector where
 -- /Since: 1.0.0/
 instance MonoTraversableWithKey BitVector where
 
+    -- | /O(n)/
     {-# INLINE otraverseWithKey #-}
     otraverseWithKey f = fmap fromBits . traverseWithKey (\k -> f (toEnum k)) . toBits
 
     
+-- |
+-- /Since: 1.0.0/
+instance MonoZip BitVector where
+
+    -- | /O(1)/
+    {-# INLINE ozipWith #-}
+    ozipWith f lhs@(BV w1 p) rhs@(BV w2 q) =
+        let !w0   = min w1 w2
+            !mask = bit (fromEnum w0) - 1
+            bv    = BV w0 . (mask .&.)
+            not'  = nat . complement
+        -- See the following entry for explanation:
+        -- https://en.wikipedia.org/wiki/Truth_table#Truth_table_for_all_binary_logical_operators
+        --
+        -- cases of f p q
+        in  case (f True True, f True False, f False True, f False False) of
+              -- Contradiction (Const False)
+              (False, False, False, False) -> bv 0
+              -- Logical NOR
+              (False, False, False, True ) -> bv $ not' lhs .&. not' rhs
+              -- Converse non-implication
+              (False, False, True , False) -> bv $ not' lhs .&. q
+              -- NOT p
+              (False, False, True , True ) -> bv $ not' lhs
+              -- Logical non-implication
+              (False, True , False, False) -> bv $ p .&. not' rhs
+              -- NOT q
+              (False, True , False, True ) -> bv $ not' rhs
+              -- Logical XOR
+              (False, True , True , False) -> bv $ p `xor` q
+              -- Logical NAND
+              (False, True , True , True ) -> bv $ not' lhs .|. not' rhs
+              -- Logical AND
+              (True , False, False, False) -> bv $ p .&. q
+              -- Logical XNOR
+              (True , False, False, True ) -> bv $ (p .&. q) .|. (not' lhs .&. not' rhs)
+              -- Const q
+              (True , False, True , False) -> bv $ q
+              -- Logical implication
+              (True , False, True , True ) -> bv $ not' lhs .|. q
+              -- Const p
+              (True , True , False, False) -> bv $ p
+              -- Converse implication
+              (True , True , False, True ) -> bv $ p .|. not' rhs
+              -- Logical OR
+              (True , True , True , False) -> bv $ p .|. q
+              -- Constant True
+              (True , True , True , True ) -> bv $ bit (fromEnum w0) - 1
+
+  
+-- |
+-- /Since: 1.0.0/
+instance MonoZipWithKey BitVector where
+
+    {-# INLINE ozipWithKey #-}
+    ozipWithKey f (BV w1 n) (BV w2 m) =
+        let w0     = min w1 w2
+            go 0 _ = 0
+            go c e = let !k = w0 - c
+                         !i = fromEnum k
+                         !j = c - 1
+                         !b = f k (n `testBit` i) (m `testBit` i)
+                         !a = e `shiftL` 1
+                         !v = if b then e else 0
+                     in  v + go j a
+        in  BV w0 $ go w0 1
+
+
 -- |
 -- /Since: 0.1.0.0/
 instance NFData BitVector where
