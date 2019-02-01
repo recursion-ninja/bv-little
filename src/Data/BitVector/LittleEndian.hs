@@ -91,17 +91,17 @@ data  BitVector
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 type instance Element BitVector = Bool
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 1.0.0
 type instance MonoKey BitVector = Word
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 instance Arbitrary BitVector where
 
     arbitrary = do
@@ -112,7 +112,7 @@ instance Arbitrary BitVector where
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 instance Bits BitVector where
 
     {-# INLINE (.&.) #-}
@@ -214,14 +214,14 @@ instance Bits BitVector where
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 instance CoArbitrary BitVector where
 
     coarbitrary bv = variant (dimension bv)
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 instance Eq BitVector where
 
     {-# INLINE (==) #-}
@@ -229,7 +229,7 @@ instance Eq BitVector where
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 instance FiniteBits BitVector where
 
     {-# INLINE finiteBitSize #-}
@@ -269,7 +269,7 @@ instance FiniteBits BitVector where
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 instance Hashable BitVector where
 
     hash (BV w n) = fromEnum w `hashWithSalt` hash n
@@ -278,7 +278,7 @@ instance Hashable BitVector where
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 instance Monoid BitVector where
 
     {-# INLINE mappend #-}
@@ -295,7 +295,7 @@ instance Monoid BitVector where
 
 
 -- |
--- /Since: 1.0.0/
+-- @since 1.0.0
 instance MonoAdjustable BitVector where
 
     -- | /O(1)/
@@ -320,7 +320,7 @@ instance MonoAdjustable BitVector where
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 instance MonoFoldable BitVector where
 
     {-# INLINE ofoldMap #-}
@@ -629,7 +629,7 @@ instance MonoFoldable BitVector where
 
 
 -- |
--- /Since: 1.0.0/
+-- @since 1.0.0
 instance MonoFoldableWithKey BitVector where
 
     -- | /O(n)/
@@ -676,7 +676,7 @@ instance MonoFoldableWithKey BitVector where
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 instance MonoFunctor BitVector where
 
     -- | /O(1)/
@@ -691,7 +691,7 @@ instance MonoFunctor BitVector where
 
 
 -- |
--- /Since: 1.0.0/
+-- @since 1.0.0
 instance MonoIndexable BitVector where
 
     -- | /O(1)/
@@ -709,7 +709,7 @@ instance MonoIndexable BitVector where
 
 
 -- |
--- /Since: 1.0.0/
+-- @since 1.0.0
 instance MonoKeyed BitVector where
 
     -- | /O(n)/
@@ -727,7 +727,7 @@ instance MonoKeyed BitVector where
 
 
 -- |
--- /Since: 1.0.0/
+-- @since 1.0.0
 instance MonoLookup BitVector where
 
     -- | /O(1)/
@@ -738,7 +738,7 @@ instance MonoLookup BitVector where
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 instance MonoTraversable BitVector where
 
     -- | /O(n)/
@@ -751,7 +751,7 @@ instance MonoTraversable BitVector where
 
 
 -- |
--- /Since: 1.0.0/
+-- @since 1.0.0
 instance MonoTraversableWithKey BitVector where
 
     -- | /O(n)/
@@ -760,7 +760,7 @@ instance MonoTraversableWithKey BitVector where
 
     
 -- |
--- /Since: 1.0.0/
+-- @since 1.0.0
 instance MonoZip BitVector where
 
     -- | /O(1)/
@@ -810,7 +810,7 @@ instance MonoZip BitVector where
 
   
 -- |
--- /Since: 1.0.0/
+-- @since 1.0.0
 instance MonoZipWithKey BitVector where
 
     {-# INLINE ozipWithKey #-}
@@ -828,7 +828,7 @@ instance MonoZipWithKey BitVector where
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 instance NFData BitVector where
 
     -- Already a strict data type,
@@ -838,7 +838,7 @@ instance NFData BitVector where
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 instance Ord BitVector where
 
     {-# INLINE compare #-}
@@ -849,7 +849,7 @@ instance Ord BitVector where
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 instance Semigroup BitVector where
 
     {-# INLINE (<>) #-}
@@ -874,14 +874,14 @@ instance Semigroup BitVector where
 
 
 -- |
--- /Since: 0.1.0.0/
+-- @since 0.1.0
 instance Show BitVector where
 
     show (BV w n) = mconcat [ "[", show w, "]", show n ]
 
 
 -- |
--- /Since: 1.0.0.0 /
+-- @since 1.0.0
 instance TextShow BitVector where
 
     showb (BV w n) = mconcat [ "[", showb w, "]", showb n ]
@@ -897,7 +897,7 @@ instance TextShow BitVector where
 --
 -- /Time:/ \(\, \mathcal{O} \left( n \right) \)
 --
--- /Since: 0.1.0.0/
+-- /Since: 0.1.0/
 --
 -- ==== __Examples__
 --
@@ -924,7 +924,7 @@ fromBits bs = BV (toEnum n) k
 --
 -- /Time:/ \(\, \mathcal{O} \left( n \right) \)
 --
--- /Since: 0.1.0.0/
+-- /Since:/ 0.1.0
 --
 -- ==== __Examples__
 --
@@ -956,7 +956,7 @@ toBits (BV w n) = go (fromEnum w) []
 --
 -- /Time:/ \(\, \mathcal{O} \left( 1 \right) \)
 --
--- /Since: 0.1.0.0/
+-- /Since: 0.1.0/
 --
 -- ==== __Examples__
 --
@@ -995,7 +995,7 @@ fromNumber !dimValue !intValue = BV dimValue . intToNat $ mask .&. v
 --
 -- /Time:/ \(\, \mathcal{O} \left( 1 \right) \)
 --
--- /Since: 0.1.0.0/
+-- /Since: 0.1.0/
 --
 -- ==== __Examples__
 --
@@ -1030,7 +1030,7 @@ toSignedNumber (BV w n) = fromInteger v
 --
 -- /Time:/ \(\, \mathcal{O} \left( 1 \right) \)
 --
--- /Since: 0.1.0.0/
+-- /Since: 0.1.0/
 --
 -- ==== __Examples__
 --
@@ -1068,7 +1068,7 @@ toUnsignedNumber = fromInteger . toInteger . nat
 --
 -- /Time:/ \(\, \mathcal{O} \left( 1 \right) \)
 --
--- /Since: 0.1.0.0/
+-- /Since: 0.1.0/
 --
 -- ==== __Examples__
 --
@@ -1088,7 +1088,7 @@ dimension = dim
 --
 -- /Time:/ \(\, \mathcal{O} \left( 1 \right) \)
 --
--- /Since: 0.1.0.0/
+-- /Since: 0.1.0/
 --
 -- ==== __Examples__
 --
@@ -1111,7 +1111,7 @@ isZeroVector = (0 ==) . nat
 --
 -- /Time:/ \(\, \mathcal{O} \left( 1 \right) \)
 --
--- /Since: 0.1.0.0/
+-- /Since: 0.1.0/
 --
 -- ==== __Examples__
 --
