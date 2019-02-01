@@ -416,16 +416,6 @@ instance MonoFoldable BitVector where
           | otherwise  = let !j = c + 1
                              !b = n `testBit` c
                          in  f b <> go j
-{-                    
-    ofoldMap1Ex f (BV w n) = go m
-      where
-        !m    = fromEnum w
-        go  1 = f $ n `testBit` 0
-        go !c = let !i = m - c
-                    !j = c - 1
-                    !b = n `testBit` i
-                in  f b <> go j
--}
 
     -- | /O(1)/
     {-# INLINE ofoldr1Ex #-}
@@ -489,10 +479,8 @@ instance MonoFoldable BitVector where
 
     -- | /O(n)/
     {-# INLINE ofoldl1Ex' #-}
-    -- TODO: Optimize this like ofoldl1Ex'
     ofoldl1Ex' _    (BV 0 _) = Prelude.error "Data.MonoTraversable.ofoldl1Ex' on an empty BitVector!"
     ofoldl1Ex' _    (BV 1 n) = n > 0
---    ofoldl1Ex' f bv = ofoldl1Ex' f $ toBits bv
     ofoldl1Ex' f bv@(BV w n) =
         -- See the following entry for explanation:
         -- https://en.wikipedia.org/wiki/Truth_table#Truth_table_for_all_binary_logical_operators
@@ -560,62 +548,12 @@ instance MonoFoldable BitVector where
     maximumByEx _ (BV 0 _) = error "Call to Data.MonoFoldable.maximumByEx on an empty BitVector!"
     maximumByEx _ (BV 1 n) = n /= 0
     maximumByEx f  bv      = maximumBy f $ toBits bv
-{-    
-    maximumByEx f (BV w n) =
-        let !allBits  = bit (fromEnum w) - 1
-            !anyFalse = n < allBits
-            !anyTrue  = n > 0
-        in  case f False False of
-              LT -> n `testBit` ((fromEnum w) - 1)
-              GT -> anyFalse
-              _  -> case f True True of
-                      GT -> anyTrue
-                      LT -> anyFalse
-                      _  -> if   n == allBits
-                            then True  -- All bits on,  max value is true
-                            else if n == 0
-                            then False -- All bits off, max value is false
-                            else case (f False True, f True False) of
-                                   (LT, LT) -> True 
-                                   (LT, EQ) -> True
-                                   (LT, GT) -> anyTrue
-                                   (EQ, LT) -> False
-                                   (EQ, EQ) -> True
-                                   (EQ, GT) -> True
-                                   (GT, LT) -> not anyFalse
-                                   (GT, EQ) -> False
-                                   (GT, GT) -> False
--}
 
     -- | /O(n)/
     {-# INLINE minimumByEx #-}
     minimumByEx _ (BV 0 _) = error "Call to Data.MonoFoldable.minimumByEx on an empty BitVector!"
     minimumByEx _ (BV 1 n) = n /= 0
     minimumByEx f  bv      = minimumBy f $ toBits bv
-{-
-    minimumByEx f (BV w n) =
-        let !allBits  = bit (fromEnum w) - 1
-            !anyFalse = n < allBits
-            !anyTrue  = n > 0
-        in  case f False False of
-              LT -> anyFalse
-              _  -> case f True True of
-                      LT -> anyTrue
-                      _  -> if   n == allBits
-                            then True  -- All bits on,  min value is true
-                            else if n == 0
-                            then False -- All bits off, min value is false
-                            else case (f False True, f True False) of
-                                   (LT, LT) -> False
-                                   (LT, EQ) -> False
-                                   (LT, GT) -> not anyFalse
-                                   (EQ, LT) -> True
-                                   (EQ, EQ) -> False
-                                   (EQ, GT) -> False
-                                   (GT, LT) -> anyTrue
-                                   (GT, EQ) -> True
-                                   (GT, GT) -> True
--}
 
     -- | /O(1)/
     {-# INLINE oelem #-}
@@ -1157,7 +1095,6 @@ toInt w
     maxInt = toEnum (maxBound :: Int)
 
 
-
 -- |
 -- While similar to the function 'naturalFromInteger' exported from GHC.Natural,
 -- this function does not throw an exception when an negative valued 'Integer'
@@ -1167,10 +1104,3 @@ intToNat :: Integer -> Natural
 intToNat (S# i#) | I# i# >= 0  = NatS# (int2Word# i#)
 intToNat (Jp# bn)              = NatJ# bn
 intToNat _                     = NatS# (int2Word# 0#)
-
-
-{-
-{-# INLINE countLeadingOnes #-}
-countLeadingOnes (BV w      0) = 0
-countLeadingOnes (BV w natVal) = countLeadingZeroes $ compliment natVal
--}

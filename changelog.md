@@ -1,3 +1,8 @@
+### Unreleased Changes
+
+  * None
+
+
 ### [v1.0.0][3]
 
   * Added explicit recursion to monomorphic folds to improve time and space performance
