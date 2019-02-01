@@ -22,8 +22,15 @@
 --   * 'FiniteBits'
 --   * 'Semigroup'
 --   * 'Monoid'
+--   * 'MonoAdjustable'
+--   * 'MonoIndexable'
+--   * 'MonoKeyed'
+--   * 'MonoLookup'
 --   * 'MonoFoldable'
+--   * 'MonoFoldableWithKey'
 --   * 'MonoTraversable'
+--   * 'MonoTraversableWithKey'
+--   * 'MonoZipWithKey'
 --
 -- For an implementation of bit vectors which are isomorphic to a @[Bool]@ with the /most/
 -- significant bit at the head of the list and the /least/ significant bit at the

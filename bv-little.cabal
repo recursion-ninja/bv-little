@@ -1,5 +1,5 @@
 name:                bv-little
-version:             0.1.2
+version:             1.0.0
 synopsis:            Efficient little-endian bit vector library
 category:            Data, Bit Vectors
 license:             BSD3
