@@ -968,7 +968,7 @@ toBits (BV w n) = go (fromEnum w) []
 --
 -- >>> fromNumber 6 96
 -- [6]32
-{-# INLINE fromNumber #-}
+{-# INLINE[1] fromNumber #-}
 fromNumber
   :: Integral v
   => Word  -- ^ dimension of bit vector
@@ -982,6 +982,12 @@ fromNumber !dimValue !intValue = BV dimValue . intToNat $ mask .&. v
     !int     = toInteger intValue
     !intBits = I# (integerLog2# int)
     !mask    = 2 ^ dimValue - 1
+
+
+{-# RULES
+"fromNumber/Natural" forall w (n :: Natural).  fromNumber w n = BV w n
+"fromNumber/Word"    forall w (v :: Word   ).  fromNumber w v = BV w (wordToNatural v)
+  #-}
 
 
 -- |
@@ -1045,9 +1051,14 @@ toSignedNumber (BV w n) = fromInteger v
 --
 -- >>> toSignedNumber [4]15
 -- 15
-{-# INLINE toUnsignedNumber #-}
+{-# INLINE[1] toUnsignedNumber #-}
 toUnsignedNumber :: Num a => BitVector -> a
 toUnsignedNumber = fromInteger . toInteger . nat
+
+
+{-# RULES
+"toUnsignedNumber/Natural" toUnsignedNumber = nat
+  #-}
 
 
 -- |
