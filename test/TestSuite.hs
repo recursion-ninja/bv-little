@@ -119,12 +119,12 @@ bitsTests = testGroup "Properties of Bits"
         bv `complementBit` i === bv `xor` bit i
 
     testBitAndSetBit :: NonNegative Int -> BitVector -> Bool
-    testBitAndSetBit (NonNegative i) bv =
-        ((`testBit` i) . (`setBit` i)) bv
+    testBitAndSetBit (NonNegative i) =
+        (`testBit` i) . (`setBit` i)
 
     testBitAndClearBit :: NonNegative Int -> BitVector -> Bool
-    testBitAndClearBit (NonNegative i) bv =
-        (not  . (`testBit` i) . (`clearBit` i)) bv
+    testBitAndClearBit (NonNegative i) =
+        not  . (`testBit` i) . (`clearBit` i)
 
     leftShiftPositiveShift :: NonNegative Int -> BitVector -> Property
     leftShiftPositiveShift (NonNegative i) bv =
@@ -213,7 +213,7 @@ hashableTests = testGroup "Properties of Hashable"
   where
     differentSaltsDifferentHashes :: BitVector -> Int -> Int -> Property
     differentSaltsDifferentHashes bv salt1 salt2 =
-        salt1 /= salt2 ==> (hashWithSalt salt1 bv) /= (hashWithSalt salt2 bv)
+        salt1 /= salt2 ==> hashWithSalt salt1 bv /= hashWithSalt salt2 bv
  
 
 
@@ -228,7 +228,7 @@ monoAdjustableProperties = testGroup "Properites of a MonoAdjustable"
   where
     oadjustId :: Word -> BitVector -> Property
     oadjustId k bv = 
-        oadjust id k bv === id bv
+        oadjust id k bv === bv
 
     oadjustComposition :: Blind (Bool -> Bool) -> Blind (Bool -> Bool) -> Word -> BitVector -> Property
     oadjustComposition (Blind f) (Blind g) k bv =
@@ -255,7 +255,7 @@ monoFunctorProperties = testGroup "Properites of a MonoFunctor"
   where
     omapId :: BitVector -> Property
     omapId bv =
-        omap id bv === id bv
+        omap id bv === bv
 
     omapComposition :: Blind (Bool -> Bool) -> Blind (Bool -> Bool) -> BitVector -> Property
     omapComposition (Blind f) (Blind g) bv =
@@ -341,10 +341,10 @@ monoFoldableWithKeyProperties = testGroup "Properties of MonoFoldableWithKey"
     [ QC.testProperty "otoKeyedList === zip [0..] . otoList" testNaturalKeyedList
     , QC.testProperty "ofoldMapWithKey (const f) === ofoldMap f" testConstantFoldMap
     , QC.testProperty "ofoldrWithKey (const f) === ofoldr f" testConstantFoldr
-    , QC.testProperty "ofoldlWithKey (const f) === ofoldl f" testConstantFoldl
+    , QC.testProperty "ofoldlWithKey (const . f) === ofoldl f" testConstantFoldl
     , QC.testProperty "ofoldMapWithKey f === foldMap (uncurry f) . otoKeyedList" testUncurriedFoldMap
     , QC.testProperty "ofoldrWithKey f === foldr (uncurry f) . otoKeyedList" testUncurriedFoldr
-    , QC.testProperty "ofoldlWithKey f === foldl (uncurry f) . otoKeyedList" testUncurriedFoldl
+    , QC.testProperty "ofoldlWithKey f === foldl (uncurry . f) . otoKeyedList" testUncurriedFoldl
     ]
   where
     testNaturalKeyedList :: BitVector -> Property
@@ -361,7 +361,7 @@ monoFoldableWithKeyProperties = testGroup "Properties of MonoFoldableWithKey"
 
     testConstantFoldl :: Blind (Word -> Bool -> Word) -> Word -> BitVector -> Property
     testConstantFoldl (Blind f) e bv =
-        ofoldlWithKey (\a -> const (f a)) e bv === ofoldl' f e bv
+        ofoldlWithKey (const . f) e bv === ofoldl' f e bv
 
     testUncurriedFoldMap :: Blind (Word -> Bool -> [Word]) -> BitVector -> Property
     testUncurriedFoldMap (Blind f) bv =
@@ -373,7 +373,7 @@ monoFoldableWithKeyProperties = testGroup "Properties of MonoFoldableWithKey"
 
     testUncurriedFoldl :: Blind (Word -> Word -> Bool -> Word) -> Word -> BitVector -> Property
     testUncurriedFoldl (Blind f) e bv =
-        ofoldlWithKey f e bv === (foldl (\a -> uncurry (f a)) e . otoKeyedList) bv
+        ofoldlWithKey f e bv === (foldl (uncurry . f) e . otoKeyedList) bv
 
 
 monoKeyedProperties :: TestTree
@@ -384,7 +384,7 @@ monoKeyedProperties = testGroup "Properites of a MonoKeyed"
   where
     omapId :: BitVector -> Property
     omapId bv =
-        omapWithKey (const id) bv === id bv
+        omapWithKey (const id) bv === bv
 
     omapComposition :: Blind (Word -> Bool -> Bool) -> Blind (Word -> Bool -> Bool) -> BitVector -> Property
     omapComposition (Blind f) (Blind g) bv =
@@ -434,7 +434,7 @@ monoTraversableWithKeyProperties = testGroup "Properties of MonoTraversableWithK
 
     testComposition :: Blind (Word -> Bool -> Either Word Bool) -> Blind (Word -> Bool -> Maybe Bool) -> BitVector -> Property
     testComposition (Blind f) (Blind g) bv =
-        otraverseWithKey (\k -> Compose . fmap (g k) . (f k)) bv === (Compose . fmap (otraverseWithKey g) . otraverseWithKey f) bv
+        otraverseWithKey (\k -> Compose . fmap (g k) . f k) bv === (Compose . fmap (otraverseWithKey g) . otraverseWithKey f) bv
 
     testDefinitionEquality :: Blind (Word -> Bool -> Maybe Bool) -> BitVector -> Property
     testDefinitionEquality (Blind f) bv =
@@ -550,7 +550,7 @@ semigroupProperties = testGroup "Properties of a Semigroup"
         bvs = let x:xs = getNonEmpty nel
               in  x:|xs
 
-    repeatedApplication :: (NonNegative Int) -> BitVector -> Property
+    repeatedApplication :: NonNegative Int -> BitVector -> Property
     repeatedApplication (NonNegative i) bv =
         stimes i bv === (mconcat . replicate i) bv
 
@@ -657,7 +657,7 @@ monoFunctorEquivelence = testGroup "Equivelence of a MonoFunctor"
     ]
   where
     omapOptimizationIsValid :: (Bool -> Bool, VisualBitVector) -> Bool
-    omapOptimizationIsValid (f, y) = (omap f) bv == (fromBits . map f . toBits) bv
+    omapOptimizationIsValid (f, y) = omap f bv == (fromBits . map f . toBits) bv
       where
         bv = getBitVector y
 
@@ -677,27 +677,27 @@ monoFoldableEquivelence = testGroup "Equivelence of a MonoFoldable"
     ]
   where
     oallOptimizationIsValid :: (UnaryLogicalOperator, VisualBitVector) -> Bool
-    oallOptimizationIsValid (y, x) = (oall op) bv == (all op . otoList) bv
+    oallOptimizationIsValid (y, x) = oall op bv == (all op . otoList) bv
       where
         bv = getBitVector x
         op = getUnaryLogicalOperator y
 
     oanyOptimizationIsValid :: (UnaryLogicalOperator, VisualBitVector) -> Bool
-    oanyOptimizationIsValid (y, x) = (oany op) bv == (any op . otoList) bv
+    oanyOptimizationIsValid (y, x) = oany op bv == (any op . otoList) bv
       where
         bv = getBitVector x
         op = getUnaryLogicalOperator y
 
     ofoldr1ExOptimizationIsValid :: (BinaryLogicalOperator, VisualBitVector) -> Bool
     ofoldr1ExOptimizationIsValid (y, x) =
-        isZeroVector bv || (ofoldr1Ex op) bv == (foldr1 op . otoList) bv
+        isZeroVector bv || ofoldr1Ex op bv == (foldr1 op . otoList) bv
       where
         bv = getBitVector x
         op = getBinaryLogicalOperator  y
 
     ofoldl1ExOptimizationIsValid :: (BinaryLogicalOperator, VisualBitVector) -> Bool
     ofoldl1ExOptimizationIsValid (y, x) =
-        isZeroVector bv || (ofoldl1Ex' op) bv == (foldl1 op . otoList) bv
+        isZeroVector bv || ofoldl1Ex' op bv == (foldl1 op . otoList) bv
       where
         bv = getBitVector x
         op = getBinaryLogicalOperator  y
@@ -716,25 +716,25 @@ monoFoldableEquivelence = testGroup "Equivelence of a MonoFoldable"
 
     maximumByExOptimizationIsValid :: (VisualBitVector, ComparisonOperator) -> Bool
     maximumByExOptimizationIsValid (x, y) =
-        isZeroVector bv || (maximumByEx op) bv == (maximumBy op . otoList) bv
+        isZeroVector bv || maximumByEx op bv == (maximumBy op . otoList) bv
       where
         bv = getBitVector  x
         op = getComparator y
 
     minimumByExOptimizationIsValid :: (VisualBitVector, ComparisonOperator) -> Bool
     minimumByExOptimizationIsValid (x, y) =
-        isZeroVector bv || (minimumByEx op) bv == (minimumBy op . otoList) bv
+        isZeroVector bv || minimumByEx op bv == (minimumBy op . otoList) bv
       where
         bv = getBitVector  x
         op = getComparator y
 
     oelemOptimizationIsValid :: (VisualBitVector, Bool) -> Bool
-    oelemOptimizationIsValid (x, e) = (oelem e) bv == (oelem e . otoList) bv
+    oelemOptimizationIsValid (x, e) = oelem e bv == (oelem e . otoList) bv
       where
         bv = getBitVector x
 
     onotElemOptimizationIsValid :: (VisualBitVector, Bool) -> Bool
-    onotElemOptimizationIsValid (x, e) = (onotElem e) bv == (onotElem e . otoList) bv
+    onotElemOptimizationIsValid (x, e) = onotElem e bv == (onotElem e . otoList) bv
       where
         bv = getBitVector x
 

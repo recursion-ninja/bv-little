@@ -4,7 +4,11 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Data.BitVector.Visual where
+module Data.BitVector.Visual
+  ( VisualBitVector()
+  , VisualBitVectorSmall()
+  , HasBitVector(..)
+  )where
 
 import Control.DeepSeq
 import Data.Bits
@@ -88,11 +92,7 @@ instance Enum VisualBitVector where
       where
         go i = VBV $ fromNumber (toEnum dim) num
           where
-            num = i - off
-            off = (bit dim - 1)
-            dim = logBase2 $ i + 1
-
-        logBase2 x = finiteBitSize x - 1 - countLeadingZeros x
+            (num, off, dim) = getEnumContext i
 
     fromEnum (VBV bv) =
         case dim of
@@ -109,11 +109,7 @@ instance Enum VisualBitVectorSmall where
       where
         go i = VBVS $ fromNumber (toEnum dim) num
           where
-            num = i - off
-            off = (bit dim - 1)
-            dim = logBase2 $ i + 1
-
-        logBase2 x = finiteBitSize x - 1 - countLeadingZeros x
+            (num, off, dim) = getEnumContext i
 
     fromEnum (VBVS bv) =
         case dim of
@@ -159,3 +155,12 @@ instance Show VisualBitVectorSmall where
       , foldMap (\b -> if b then "1" else "0") $ toBits bv
       , ">"
       ]
+
+
+getEnumContext i = (num, off, dim)
+  where
+    num = i - off
+    off = bit dim - 1
+    dim = logBase2 $ i + 1
+    logBase2 x = finiteBitSize x - 1 - countLeadingZeros x
+

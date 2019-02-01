@@ -36,8 +36,13 @@
 --
 -----------------------------------------------------------------------------
 
-{-# LANGUAGE BangPatterns, DeriveDataTypeable, DeriveGeneric, MagicHash, OverloadedStrings #-}
-{-# LANGUAGE Trustworthy, TypeFamilies #-}
+{-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE MagicHash          #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE Trustworthy        #-}
+{-# LANGUAGE TypeFamilies       #-}
 
 module Data.BitVector.LittleEndian
   ( BitVector()
@@ -61,8 +66,9 @@ import Data.Data
 import Data.Foldable
 import Data.Hashable
 import Data.Key
-import Data.List.NonEmpty (NonEmpty(..))
-import Data.Monoid        ()
+import Data.List.NonEmpty        (NonEmpty(..))
+import Data.Maybe
+import Data.Monoid               ()
 import Data.MonoTraversable
 import Data.MonoTraversable.Keys
 import Data.Ord
@@ -74,8 +80,8 @@ import GHC.Generics
 import GHC.Integer.GMP.Internals
 import GHC.Integer.Logarithms
 import GHC.Natural
-import Test.QuickCheck (Arbitrary(..), CoArbitrary(..), NonNegative(..), suchThat, variant)
-import TextShow(TextShow(showb))
+import Test.QuickCheck           (Arbitrary(..), CoArbitrary(..), NonNegative(..), suchThat, variant)
+import TextShow                  (TextShow(showb))
 
 
 -- |
@@ -125,7 +131,7 @@ instance Bits BitVector where
     (BV w1 a) `xor` (BV w2 b) = BV (max w1 w2) $ a `xor` b
 
     {-# INLINE complement #-}
-    complement (BV w n) = BV w $ (shiftL 1 (fromEnum w)) - 1 - n
+    complement (BV w n) = BV w $ shiftL 1 (fromEnum w) - 1 - n
 
     {-# INLINE zeroBits #-}
     zeroBits = BV 0 0
@@ -634,16 +640,15 @@ instance MonoIndexable BitVector where
 
     -- | /O(1)/
     {-# INLINE oindex #-}
-    oindex bv@(BV w _) i =
-        case i `olookup` bv of
-          Just v  -> v
-          Nothing -> error $ mconcat
+    oindex bv@(BV w _) i = fromMaybe errorMessage $ i `olookup` bv
+      where
+        errorMessage = error $ mconcat
             [ "Data.BitVector.LittleEndian.oindex: "
             , "The index "
             , show i
             , " was greater than or equal to the length of the bit vector "
             , show w
-            ]
+            ] 
 
 
 -- |
@@ -694,7 +699,7 @@ instance MonoTraversableWithKey BitVector where
 
     -- | /O(n)/
     {-# INLINE otraverseWithKey #-}
-    otraverseWithKey f = fmap fromBits . traverseWithKey (\k -> f (toEnum k)) . toBits
+    otraverseWithKey f = fmap fromBits . traverseWithKey (f . toEnum) . toBits
 
     
 -- |
@@ -734,11 +739,11 @@ instance MonoZip BitVector where
               -- Logical XNOR
               (True , False, False, True ) -> bv $ (p .&. q) .|. (not' lhs .&. not' rhs)
               -- Const q
-              (True , False, True , False) -> bv $ q
+              (True , False, True , False) -> bv q
               -- Logical implication
               (True , False, True , True ) -> bv $ not' lhs .|. q
               -- Const p
-              (True , True , False, False) -> bv $ p
+              (True , True , False, False) -> bv p
               -- Converse implication
               (True , True , False, True ) -> bv $ p .|. not' rhs
               -- Logical OR
@@ -914,7 +919,7 @@ fromNumber
   -> BitVector
 fromNumber !dimValue !intValue = BV dimValue . intToNat $ mask .&. v
   where
-    !v | signum int < 0 = negate $ (shiftL 1 intBits) - int
+    !v | signum int < 0 = negate $ shiftL 1 intBits - int
        | otherwise      = int
 
     !int     = toInteger intValue
@@ -959,7 +964,7 @@ toSignedNumber :: Num a => BitVector -> a
 toSignedNumber (BV w n) = fromInteger v
   where
     !i = toInteger n
-    !v | n `testBit` (fromEnum w - 1) = negate $ (shiftL 1 (fromEnum w)) - i
+    !v | n `testBit` (fromEnum w - 1) = negate $ shiftL 1 (fromEnum w) - i
        | otherwise = i
 
 

@@ -12,13 +12,8 @@ module Operator.Unary.Logical
   ) where
 
 import Control.DeepSeq
-import Data.Bits
-import Data.BitVector.LittleEndian
 import Data.Data
-import Data.Hashable
-import Data.List.NonEmpty (NonEmpty(..))
 import Data.Monoid ()
-import Data.MonoTraversable
 import Data.Semigroup
 import GHC.Generics
 import Test.QuickCheck        hiding (generate)
@@ -57,7 +52,7 @@ instance Enum UnaryLogicalOperator where
           0  -> AlwaysFalse
           1  -> Identity
           2  -> Negation
-          3  -> AlwaysTrue
+          _  -> AlwaysTrue
 
     fromEnum x =
         case x of

@@ -10,24 +10,17 @@ module Operator.Binary.Comparison
   ) where
 
 import Control.DeepSeq
-import Data.Bits
-import Data.BitVector.LittleEndian
 import Data.Data
-import Data.Functor.Compose
-import Data.Functor.Identity
-import Data.Hashable
 import Data.List                     (elemIndex)
-import Data.List.NonEmpty            (NonEmpty(..))
 import Data.Maybe                    (fromJust)
 import Data.Monoid                   ()
-import Data.MonoTraversable
 import Data.Semigroup
 import GHC.Generics
 import Test.QuickCheck        hiding (generate)
 import Test.SmallCheck.Series
 
 
-data ComparisonOperator = CO { getComparator :: Bool -> Bool -> Ordering }
+newtype ComparisonOperator = CO { getComparator :: Bool -> Bool -> Ordering }
     deriving (Generic, NFData, Typeable)
 
 

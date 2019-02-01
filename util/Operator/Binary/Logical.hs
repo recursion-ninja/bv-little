@@ -12,15 +12,8 @@ module Operator.Binary.Logical
   ) where
 
 import Control.DeepSeq
-import Data.Bits
-import Data.BitVector.LittleEndian
 import Data.Data
-import Data.Functor.Compose
-import Data.Functor.Identity
-import Data.Hashable
-import Data.List.NonEmpty (NonEmpty(..))
 import Data.Monoid ()
-import Data.MonoTraversable
 import Data.Semigroup
 import GHC.Generics
 import Test.QuickCheck        hiding (generate)
@@ -83,7 +76,7 @@ instance Enum BinaryLogicalOperator where
           12 -> FirstArgument
           13 -> ConverseImplication
           14 -> LogicalOR
-          15 -> AlwaysTrue
+          _  -> AlwaysTrue
 
     fromEnum x =
         case x of
@@ -190,7 +183,7 @@ getBinaryLogicalOperator x =
       LogicalXNOR            -> (==)
       SecondArgument         -> \_ q ->              q
       Implication            -> \p q -> not p ||     q
-      FirstArgument          -> \p _ ->     p
+      FirstArgument          -> const
       ConverseImplication    -> \p q ->     p || not q
       LogicalOR              -> (||)
       AlwaysTrue             -> const (const True)
