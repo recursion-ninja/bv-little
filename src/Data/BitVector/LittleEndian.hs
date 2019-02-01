@@ -303,7 +303,7 @@ instance MonoAdjustable BitVector where
     oadjust f k bv@(BV w n)
       | k >= w    = bv
       | v == b    = bv
-      | otherwise = BV w $ n `complementBit` i
+      | otherwise = bv `complementBit` i
       where
         !i = fromEnum k
         !v = n `testBit` i
@@ -311,10 +311,10 @@ instance MonoAdjustable BitVector where
 
     -- | /O(1)/
     {-# INLINE oreplace #-}
-    oreplace k v bv@(BV w n)
+    oreplace k v bv@(BV w _)
       | k >= w    = bv
-      | v         = BV w $ n   `setBit` i
-      | otherwise = BV w $ n `clearBit` i
+      | v         = bv   `setBit` i
+      | otherwise = bv `clearBit` i
       where
         !i = fromEnum k
 
