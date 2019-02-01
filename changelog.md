@@ -1,4 +1,17 @@
-### Unreleased Changes (1.0.0.0)
+### [v1.0.0][3]
+
+  * Added explicit recursion to monomorphic folds to improve time and space performance
+
+  * Added the following instances:
+    * `MonoAdjustable`
+    * `MonoFoldableWithKey`
+    * `MonoIndexable`
+    * `MonoKeyed`
+    * `MonoLookup`
+    * `MonoTraversableWithKey`
+    * `MonoZip`
+    * `MonoZipWithKey`
+    * `TextShow`
 
   * Updated the following functions to be constant time:
     * `omap`
@@ -6,15 +19,13 @@
     * `oall`
     * `oany`
     * `ofoldr1Ex`
+    * `ofoldl1Ex`
     * `oelem`
     * `onotElem`
-
-  * Added explicit recursion to monomorphic folds to improve time and space performance
-
-  * Added TextShow instance and tests for it
+    * `ozipWith`
 
 
-### [v0.1.2][1]
+### [v0.1.2][2]
 
   * Updating to base bounds for GHC 8.6.1
 
@@ -48,3 +59,4 @@
 [0]: https://github.com/recursion-ninja/bv-little/tree/v0.1.0
 [1]: https://github.com/recursion-ninja/bv-little/tree/v0.1.1
 [2]: https://github.com/recursion-ninja/bv-little/tree/v0.1.2
+[3]: https://github.com/recursion-ninja/bv-little/tree/v1.0.0
