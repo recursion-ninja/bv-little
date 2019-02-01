@@ -107,6 +107,7 @@ after_script:
   - hpc-coveralls --coverage-mode=StrictlyFullLines
                   --exclude-dir=bench
                   --exclude-dir=tests
+                  --exclude-dir=util
                   test-suite
 
 cache:
