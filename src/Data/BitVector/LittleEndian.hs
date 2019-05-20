@@ -64,7 +64,6 @@ module Data.BitVector.LittleEndian
   , dimension
   , isZeroVector
   , subRange
-  , showNatural
   ) where
 
 
@@ -88,7 +87,7 @@ import GHC.Generics
 import GHC.Integer.GMP.Internals
 import GHC.Integer.Logarithms
 import GHC.Natural
-import Test.QuickCheck           (Arbitrary(..), CoArbitrary(..), NonNegative(..), suchThat, variant)
+import Test.QuickCheck           (Arbitrary(..), CoArbitrary(..), NonNegative(..), choose, suchThat, variant)
 import TextShow                  (TextShow(showb))
 
 
@@ -118,11 +117,50 @@ type instance MonoKey BitVector = Word
 -- @since 0.1.0
 instance Arbitrary BitVector where
 
+    -- Arbitrary instance distribution weighting:
+    --  -  2% = (maxBound :: Word)
+    --  -  2% = (maxBound :: Word) + 1
+    --  -  8% = all bits on
+    --  -  8% = all bits off
+    --  - 80% = any bit configuration
     arbitrary = do
-        dimVal <- getNonNegative <$> arbitrary
-        let upperBound = shiftL 1 dimVal
-        intVal <- (getNonNegative <$> arbitrary) `suchThat` (< upperBound)
-        pure . BV (toEnum dimVal) $ intToNat intVal
+        -- 1/25 chance of generating the boundary value at which the natural number
+        -- must use different Natural constructors: NatS# & NatJ# 
+        n <- choose (0, 25 :: Word)
+        case n of
+          0 -> boundaryValue
+          1 -> allBitsOn
+          2 -> allBitsOn
+          3 -> allBitsOff
+          4 -> allBitsOff
+          _ -> anyBitValue
+      where
+        allBitsOn     = genBitVector $ Just True
+        allBitsOff    = genBitVector $ Just False
+        anyBitValue   = genBitVector $ Nothing
+        
+        boundaryValue = do
+            let wrdVal = maxBound :: Word
+            let dimVal = toEnum $ popCount wrdVal
+            let numVal = wordToNatural wrdVal
+            -- 50/50 change to generate above or below the constructor boundary
+            underBoundary <- arbitrary
+            let (lowerBound, naturalVal)
+                  | underBoundary = (dimVal    , numVal    )
+                  | otherwise     = (dimVal + 1, numVal + 1)
+            widthVal <- (getNonNegative <$> arbitrary) `suchThat` (>= lowerBound)
+            pure $ BV widthVal naturalVal
+
+        genBitVector spec = do
+            dimVal <- getNonNegative <$> arbitrary 
+            let upperBound = shiftL 1 dimVal
+            -- 1/5 chance all bits on or all bits off
+            natVal <- case spec of
+                        Just False -> pure $ intToNat 0
+                        Just True  -> pure . intToNat $ upperBound - 1
+                        Nothing    -> fmap intToNat $
+                                        (getNonNegative <$> arbitrary) `suchThat` (< upperBound)
+            pure $ BV (toEnum dimVal) natVal
 
 
 -- |
@@ -158,14 +196,14 @@ instance Bits BitVector where
         in  BV w $ n .&. mask
 
     {-# INLINE setBit #-}
-    setBit bv@(BV w n) i@(I# v)
+    setBit bv@(BV w n) i
       | i < 0 = bv
-      | otherwise = BV (max w j) $ (n `orNatural` (bitNatural v :: Natural) :: Natural)
+      | otherwise = BV (max w j) $ n `setBit` i
       where
         !j = toEnum i + 1
 
     {-# INLINE testBit #-}
-    testBit (BV w n) i = i >= 0 && toEnum i < w && n `testBitNatural` i
+    testBit (BV w n) i = i >= 0 && toEnum i < w && n `testBit` i
 
     bitSize (BV w _) = fromEnum w
 
@@ -1116,16 +1154,9 @@ toInt w
 -- this function does not throw an exception when an negative valued 'Integer'
 -- is supplied and is also compatible with base < 4.10.0.0.
 {-# INLINE intToNat #-}
+-- {-# NOINLINE intToNat #-}
 intToNat :: Integer -> Natural
-intToNat (S# i#) | I# i# >= 0  = NatS# (int2Word# i#)
-intToNat (Jp# bn)              = NatJ# bn
-intToNat _                     = NatS# (int2Word# 0#)
-
-
--- |
--- Utility Function for printing the 'Natural' number constructor.
-showNatural :: BitVector -> String
-showNatural (BV w   (NatS# v)) = unwords ["["<>show w<>"]", "NatS#", show (W# v)]
-showNatural (BV w n@(NatJ# _)) = unwords ["["<>show w<>"]", "NatJ#", show n]
-
-
+intToNat (S#  i#) | isTrue# (i# >=# 0#)               = NatS# (int2Word# i#)
+intToNat (Jp# bn) | isTrue# (sizeofBigNat# bn ==# 1#) = NatS# (bigNatToWord bn)
+                  | otherwise                         = NatJ# bn
+intToNat _                                            = NatS# (int2Word# 0#)

@@ -34,7 +34,7 @@ import           TextShow (TextShow(showb), toString)
 
 infix 0 -=>
 (-=>) :: QC.Testable p => Bool -> p -> Property 
-(-=>) p q = (not p) .||. q
+(-=>) p q = not p .||. q
 
 
 main :: IO ()
