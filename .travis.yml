@@ -36,10 +36,15 @@ matrix:
       sudo: false
       addons: {apt: {packages: [cabal-install-2.2, ghc-8.4.4], sources: [hvr-ghc]}}
 
-    - compiler: "ghc-8.6.2"
+    - compiler: "ghc-8.6.5"
       os: linux
       sudo: false
-      addons: {apt: {packages: [cabal-install-2.4, ghc-8.6.2], sources: [hvr-ghc]}}
+      addons: {apt: {packages: [cabal-install-2.4, ghc-8.6.5], sources: [hvr-ghc]}}
+
+    - compiler: "ghc-8.8.1"
+      os: linux
+      sudo: false
+      addons: {apt: {packages: [cabal-install-2.4, ghc-8.8.1], sources: [hvr-ghc]}}
 
     - compiler: "ghc-head"
       env: $GHCHEAD=true

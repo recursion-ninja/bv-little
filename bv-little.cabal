@@ -1,5 +1,5 @@
 name:                bv-little
-version:             1.0.0
+version:             1.0.1
 synopsis:            Efficient little-endian bit vector library
 category:            Data, Bit Vectors
 license:             BSD3
@@ -20,7 +20,8 @@ description:
 build-type:          Simple
 cabal-version:       >= 1.22
 
-tested-with:         GHC == 8.6.2
+tested-with:         GHC == 8.8.1
+                     GHC == 8.6.5
                      GHC == 8.4.4
                      GHC == 8.2.2
                      GHC == 8.0.2

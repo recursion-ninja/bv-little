@@ -2,6 +2,12 @@
 
   * None
 
+### [v1.0.1][4]
+
+  * Correcting Eq instance to test for value equality and not construction equality
+
+  * Updated unit tests do not fail when the antecedent of logical implication cannot be satisfied
+
 
 ### [v1.0.0][3]
 
@@ -65,3 +71,4 @@
 [1]: https://github.com/recursion-ninja/bv-little/tree/v0.1.1
 [2]: https://github.com/recursion-ninja/bv-little/tree/v0.1.2
 [3]: https://github.com/recursion-ninja/bv-little/tree/v1.0.0
+[4]: https://github.com/recursion-ninja/bv-little/tree/v1.0.1
