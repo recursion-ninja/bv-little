@@ -64,6 +64,7 @@ module Data.BitVector.LittleEndian
   , dimension
   , isZeroVector
   , subRange
+  , showNatural
   ) where
 
 
@@ -156,15 +157,15 @@ instance Bits BitVector where
             !mask    = bit i `xor` allBits
         in  BV w $ n .&. mask
 
-{-
     {-# INLINE setBit #-}
-    setBit bv@(BV w n) i
-      | i < 0 || i >= w = bv
-      | otherwise       = BV w $ n `setBit` i
--}
+    setBit bv@(BV w n) i@(I# v)
+      | i < 0 = bv
+      | otherwise = BV (max w j) $ (n `orNatural` (bitNatural v :: Natural) :: Natural)
+      where
+        !j = toEnum i + 1
 
     {-# INLINE testBit #-}
-    testBit (BV w n) i = i >= 0 && toEnum i < w && n `testBit` i
+    testBit (BV w n) i = i >= 0 && toEnum i < w && n `testBitNatural` i
 
     bitSize (BV w _) = fromEnum w
 
@@ -238,7 +239,10 @@ instance CoArbitrary BitVector where
 instance Eq BitVector where
 
     {-# INLINE (==) #-}
-    (==) (BV w1 m) (BV w2 n) = w1 == w2 && m == n
+    (==) (BV w1 m) (BV w2 n) = w1 == w2 && naturalToBigNat m == naturalToBigNat n
+      where
+        naturalToBigNat (NatS# w ) = wordToBigNat w
+        naturalToBigNat (NatJ# bn) = bn
 
 
 -- |
@@ -1116,3 +1120,12 @@ intToNat :: Integer -> Natural
 intToNat (S# i#) | I# i# >= 0  = NatS# (int2Word# i#)
 intToNat (Jp# bn)              = NatJ# bn
 intToNat _                     = NatS# (int2Word# 0#)
+
+
+-- |
+-- Utility Function for printing the 'Natural' number constructor.
+showNatural :: BitVector -> String
+showNatural (BV w   (NatS# v)) = unwords ["["<>show w<>"]", "NatS#", show (W# v)]
+showNatural (BV w n@(NatJ# _)) = unwords ["["<>show w<>"]", "NatJ#", show n]
+
+
