@@ -32,6 +32,11 @@ import qualified Test.Tasty.SmallCheck as SC
 import           TextShow (TextShow(showb), toString)
 
 
+infix 0 -=>
+(-=>) :: QC.Testable p => Bool -> p -> Property 
+(-=>) p q = (not p) .||. q
+
+
 main :: IO ()
 main = defaultMain testSuite
 
@@ -109,7 +114,7 @@ bitsTests = testGroup "Properties of Bits"
 
     clearBitDefinition :: NonNegative Int -> BitVector -> Property
     clearBitDefinition (NonNegative i) bv =
-        i < (fromEnum . dimension) bv ==>
+        i < (fromEnum . dimension) bv -=>
           (bv `clearBit` i === bv .&. complement  (zed .|. bit i))
       where
         zed = fromNumber (dimension bv) (0 :: Integer)
@@ -208,12 +213,12 @@ finiteBitsTests = testGroup "Properties of FiniteBits"
 hashableTests :: TestTree
 hashableTests = testGroup "Properties of Hashable"
     [ localOption (QuickCheckTests 10000)
-        $ QC.testProperty "a == b ==> (hashWithSalt a) === (hashWithSalt b)" differentSaltsDifferentHashes
+        $ QC.testProperty "a == b -=> (hashWithSalt a) === (hashWithSalt b)" differentSaltsDifferentHashes
     ]
   where
     differentSaltsDifferentHashes :: BitVector -> Int -> Int -> Property
     differentSaltsDifferentHashes bv salt1 salt2 =
-        salt1 /= salt2 ==> hashWithSalt salt1 bv /= hashWithSalt salt2 bv
+        salt1 /= salt2 -=> hashWithSalt salt1 bv /= hashWithSalt salt2 bv
  
 
 
@@ -299,13 +304,13 @@ monoFoldableProperties = testGroup "Properties of MonoFoldable"
     testFoldr1 :: BinaryLogicalOperator -> BitVector -> Property
 --    testFoldr1 (Blind f) bv =
     testFoldr1 x bv =
-        (not . onull) bv  ==> ofoldr1Ex f bv === (foldr1 f . otoList) bv
+        (not . onull) bv  -=> ofoldr1Ex f bv === (foldr1 f . otoList) bv
       where
         f = getBinaryLogicalOperator x
 
     testFoldl1 :: Blind (Bool -> Bool -> Bool) -> BitVector -> Property
     testFoldl1 (Blind f) bv =
-        (not . onull) bv  ==> ofoldl1Ex' f bv === (foldl1 f . otoList) bv
+        (not . onull) bv  -=> ofoldl1Ex' f bv === (foldl1 f . otoList) bv
 
     testAll :: Blind (Bool -> Bool) -> BitVector -> Property
     testAll (Blind f) bv =
@@ -325,11 +330,11 @@ monoFoldableProperties = testGroup "Properties of MonoFoldable"
 
     testHead :: BitVector -> Property
     testHead bv =
-        (not . onull) bv ==> headEx bv === (getFirst . ofoldMap1Ex First) bv
+        (not . onull) bv -=> headEx bv === (getFirst . ofoldMap1Ex First) bv
 
     testTail :: BitVector -> Property
     testTail bv =
-        (not . onull) bv ==> lastEx bv === (getLast . ofoldMap1Ex Last) bv
+        (not . onull) bv -=> lastEx bv === (getLast . ofoldMap1Ex Last) bv
 
     testInclusionConsistency :: (Bool, BitVector) -> Property
     testInclusionConsistency (e, bv) =
@@ -526,8 +531,8 @@ orderingProperties = testGroup "Properties of an Ordering"
     transitivity :: BitVector -> BitVector -> BitVector -> Property
     transitivity a b c = caseOne .||. caseTwo
       where
-        caseOne = (a <= b && b <= c) ==> a <= c
-        caseTwo = (a >= b && b >= c) ==> a >= c
+        caseOne = (a <= b && b <= c) -=> a <= c
+        caseTwo = (a >= b && b >= c) -=> a >= c
 
 
 semigroupProperties :: TestTree
@@ -589,12 +594,12 @@ bitVectorProperties = testGroup "BitVector properties"
     ,    testCase     "isZeroVector zeroBits" zeroBitsIsZeroVector
     , QC.testProperty "isZeroVector === (0 ==) . popCount" popCountAndZeroVector
     , QC.testProperty "isZeroVector === all not . toBits" zeroVectorAndAllBitsOff
-    , QC.testProperty "(0 ==) . toUnsignedNumber ==> isZeroVector" toUnsignedNumImpliesZeroVector
+    , QC.testProperty "(0 ==) . toUnsignedNumber -=> isZeroVector" toUnsignedNumImpliesZeroVector
     , QC.testProperty "toSignedNumber . fromNumber === id" bitVectorUnsignedNumIdentity
     , QC.testProperty "isSigned == const False" noSignBitVector
 -- For an unknown reason, this test case causes GHC to panic!
---    , QC.testProperty "i >  j ==> subRange (i,j) === const zeroBits" badSubRangeEmptyResult
-    , QC.testProperty "i <= j ==> dimension . subRange (i,j) === const (j - i + 1)" subRangeFixedDimension
+--    , QC.testProperty "i >  j -=> subRange (i,j) === const zeroBits" badSubRangeEmptyResult
+    , QC.testProperty "i <= j -=> dimension . subRange (i,j) === const (j - i + 1)" subRangeFixedDimension
     ]
   where
     otoListTest :: BitVector -> Property
@@ -627,7 +632,7 @@ bitVectorProperties = testGroup "BitVector properties"
 
     toUnsignedNumImpliesZeroVector :: BitVector -> Property
     toUnsignedNumImpliesZeroVector bv =
-        ((0 ==) . (toUnsignedNumber :: BitVector -> Integer)) bv ==> isZeroVector bv
+        ((0 ==) . (toUnsignedNumber :: BitVector -> Integer)) bv -=> isZeroVector bv
 
     bitVectorUnsignedNumIdentity :: Integer -> Property
     bitVectorUnsignedNumIdentity num =
@@ -641,11 +646,11 @@ bitVectorProperties = testGroup "BitVector properties"
 
     badSubRangeEmptyResult :: (Word, Word) -> BitVector -> Property
     badSubRangeEmptyResult range@(lower, upper) bv =
-        lower > upper ==> subRange range bv === zeroBits
+        lower > upper -=> subRange range bv === zeroBits
 
     subRangeFixedDimension :: (NonNegative Int, NonNegative Int) -> BitVector -> Property
     subRangeFixedDimension (NonNegative lowerI, NonNegative upperI) bv =
-        lower <= upper ==> dimension (subRange (lower, upper) bv) === upper - lower + 1
+        lower <= upper -=> dimension (subRange (lower, upper) bv) === upper - lower + 1
       where
         lower = toEnum lowerI
         upper = toEnum upperI
