@@ -16,6 +16,7 @@ import           Data.Functor.Compose
 import           Data.Functor.Identity
 import           Data.Hashable
 import           Data.List.NonEmpty (NonEmpty(..))
+import           Data.Maybe
 import           Data.Monoid ()
 import           Data.MonoTraversable
 import           Data.MonoTraversable.Keys
@@ -62,6 +63,7 @@ testSuite = testGroup "BitVector tests"
     , showProperties
     , textshowProperties
     , bitVectorProperties
+    , bitVectorRankSelect
     , monoFunctorEquivelence
     , monoFoldableEquivelence
     , monoZipEquivelence
@@ -655,6 +657,53 @@ bitVectorProperties = testGroup "BitVector properties"
         lower = toEnum lowerI
         upper = toEnum upperI
 
+
+bitVectorRankSelect :: TestTree
+bitVectorRankSelect = testGroup "BitVector rank/select"
+    [ QC.testProperty "select (bit i) 0 === i" selectBitValue
+    , QC.testProperty "select (bit x .|. bit y) 0 === min (select (bit x) 0) (select (bit y) 0)" selectBitOr
+    , QC.testProperty "rank (bit x .|. bit y) (max x y + 1) === rank (bit x) (x+1) + rank (bit y) (y+1)" rankBitOr
+    , QC.testProperty "rank (bit i) (i+1) === i" rankBitValue
+    , QC.testProperty "rank <$> id <*> dimension === popCount" rankPopCount
+    , QC.testProperty "rank bv i === length . filter id . take i . toBits bv" rankToBits
+    , QC.testProperty "rank bv (select bv i) === i" rankSelectMinDef
+    ]
+  where
+    selectBitValue :: NonNegative Int -> Property
+    selectBitValue (NonNegative x) =
+        select (bit x) 0 === Just (toEnum x)
+
+    selectBitOr :: NonNegative Int -> NonNegative Int -> Property
+    selectBitOr (NonNegative x) (NonNegative y) =
+        select (bit x .|. bit y) 0 === min (select (bit x) 0) (select (bit y) 0)
+
+    rankBitValue :: NonNegative Word -> Property
+    rankBitValue (NonNegative x) =
+        rank (bit (fromEnum x)) (x+1) === 1
+
+    rankBitOr :: NonNegative Int -> NonNegative Int -> Property
+    rankBitOr (NonNegative x) (NonNegative y) =
+        x /= y ==>
+          rank (bit x .|. bit y) z' === rank (bit x) (x'+1) + rank (bit y) (y'+1)
+      where
+        x' = toEnum x
+        y' = toEnum y
+        z' = max x' y' + 1
+
+    rankPopCount :: BitVector -> Property
+    rankPopCount bv =
+        (rank <$> id <*> dimension) bv === toEnum (popCount bv)
+
+    rankToBits :: BitVector -> NonNegative Word -> Property
+    rankToBits bv (NonNegative x) =
+        rank bv x === (toEnum . length . filter id . take (fromEnum x) . toBits) bv
+
+    rankSelectMinDef :: BitVector -> NonNegative Word -> Property
+    rankSelectMinDef bv (NonNegative x) =
+        let idx = select bv x
+            k   = fromJust idx
+        in  idx === Nothing .||. rank bv k === x
+        
 
 monoFunctorEquivelence :: TestTree
 monoFunctorEquivelence = testGroup "Equivelence of a MonoFunctor"

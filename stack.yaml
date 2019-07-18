@@ -3,4 +3,4 @@ allow-newer: true
 extra-deps:
  - mono-traversable-keys-0.1.0
 
-resolver: lts-11.0
+resolver: lts-13.28

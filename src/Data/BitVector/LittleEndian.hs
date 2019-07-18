@@ -41,6 +41,8 @@
 -- intentional! To interact with a bit vector as an 'Integral' value,
 -- convert the 'BitVector' using either 'toSignedNumber' or 'toUnsignedNumber'.
 --
+-- This module defines 'rank' and 'select' operations for 'BitVector' as a
+-- succinct data structure. 
 -----------------------------------------------------------------------------
 
 {-# LANGUAGE BangPatterns       #-}
@@ -64,6 +66,9 @@ module Data.BitVector.LittleEndian
   , dimension
   , isZeroVector
   , subRange
+  -- * Rank / Select
+  , rank
+  , select
   ) where
 
 
@@ -81,7 +86,6 @@ import Data.MonoTraversable.Keys
 import Data.Ord
 import Data.Primitive.ByteArray
 import Data.Semigroup
-import Data.Word
 import GHC.Exts
 import GHC.Generics
 import GHC.Integer.GMP.Internals
@@ -308,18 +312,19 @@ instance FiniteBits BitVector where
         f :: ByteArray -> Int
         f byteArr = g 0
           where
-            (q, r) = x `quotRem` 64
-            wMask  = complement zeroBits `xor` (2 ^ r - 1) :: Word64
+            (q, r) = x `quotRem` fromEnum bitsInWord
+            wMask  = complement zeroBits `xor` (2 ^ r - 1) :: Word
 
             g :: Int -> Int
             g !i
               | i >= q = countTrailingZeros $ wMask .|. value
               | otherwise =
-                  case countTrailingZeros value of
-                    64 -> 64 + g (i+1)
-                    v  -> v
+                  let !v = countTrailingZeros value
+                  in  if v == fromEnum bitsInWord
+                      then v + g (i+1)
+                      else v
               where
-                value :: Word64
+                value :: Word
                 value = byteArr `indexByteArray` i
 
 
@@ -1139,6 +1144,166 @@ subRange (!lower, !upper) (BV _ n)
                     m | x == maxBound = x
                       | otherwise     = x + 1
                 in  BV (toEnum m) $ b .&. pred (1 `shiftL` m)
+
+
+
+-- |
+-- Determine the number of /set/ bits in the 'BitVector' up to, /but not including/, index @k@.
+--
+-- To determine the number of /unset/ bits in the 'BitVector`, use @k - rank bv k@.
+--
+-- Uses "broadword programming." Efficient on small 'BitVector's (10^3).
+--
+-- /Time:/ \(\, \mathcal{O} \left( \frac{n}{w} \right) \), where \(w\) is the number of bits in a 'Word'.
+--
+-- /Since: 1.1.0/
+--
+-- ==== __Examples__
+--
+-- >>> let bv = fromNumber 128 0 `setBit` 0 `setBit` 65
+--
+-- >>> rank bv   0  -- Count how many ones in the first 0 bits (always returns 0)
+-- 0
+--
+-- >>> rank bv   1  -- Count how many ones in the first 1 bits
+-- 1
+--
+-- >>> rank bv   2  -- Count how many ones in the first 2 bits
+-- 1
+--
+-- >>> rank bv  65  -- Count how many ones in the first 65 bits
+-- 1
+--
+-- >>> rank bv  66  -- Count how many ones in the first 66 bits
+-- 1
+--
+-- >>> rank bv 128  -- Count how many ones in all 128 bits
+-- 2
+--
+-- >>> rank bv 129  -- Out-of-bounds, fails gracefully
+-- 2
+rank
+  :: BitVector
+  -> Word -- ^ \(k\), the rank index 
+  -> Word -- ^ Set bits within the rank index
+rank             _ 0 = 0 -- There can be no set bits /before/ the 0-th bit
+rank (BV 0      _) _ = 0 -- There can be no set bits in a bit-vector of length 0
+rank (BV w natVal) k =
+    let j = min k w
+    in  case natVal of
+          NatS#      v  -> wordRank (W# v) j
+          NatJ# (BN# v) -> f (ByteArray v) j
+  where
+    f :: ByteArray -> Word -> Word
+    f byteArr x = g x 0
+      where
+        g :: Word -> Int -> Word
+        g !j !i
+          | j < bitsInWord = wordRank value j
+          | otherwise = let !v = toEnum $ popCount value
+                        in   v + g (j - bitsInWord) (i+1)
+          where
+            value :: Word
+            value = byteArr `indexByteArray` i
+
+
+-- |
+-- Find the index of the k-th set bit in the 'BitVector'.
+--
+-- To find the index of the k-th /unset/ bit in the 'BitVector`, use @select (complement bv) k@.
+--
+-- Uses "broadword programming." Efficient on small 'BitVector's (10^3).
+--
+-- /Time:/ \(\, \mathcal{O} \left( \frac{n}{w} \right) \), where \(w\) is the number of bits in a 'Word'.
+--
+-- /Since: 1.1.0/
+--
+-- ==== __Examples__
+--
+-- >>> let bv = fromNumber 128 0 `setBit` 0 `setBit` 65
+--
+-- >>> select bv 0  -- Find the 0-indexed position of the first one bit
+-- Just 0
+--
+-- >>> select bv 1  -- Find the 0-indexed position of the second one bit
+-- Just 65
+--
+-- >>> select bv 2  -- Out-of-bounds `select` fails
+-- Nothing
+select
+  :: BitVector
+  -> Word        -- ^ \(k\), the select index 
+  -> Maybe Word  -- ^ index of the k-th set bit
+select (BV 0      _) _ = Nothing -- There can be no set bits in a bit-vector of length 0
+select (BV w natVal) k =
+    case natVal of
+      NatS#      v  -> let !u = W# v
+                       in  if toEnum (popCount u) <= k
+                           then Nothing
+                           else Just $ wordSelect u k
+      NatJ# (BN# v) -> f (ByteArray v) k
+  where
+    f :: ByteArray -> Word -> Maybe Word
+    f byteArr x = g x 0
+      where
+        g :: Word -> Int -> Maybe Word
+        g !j !i
+          | toEnum i * bitsInWord >= w = Nothing
+          | j < ones  = Just $ wordSelect value j
+          | otherwise = (bitsInWord +) <$> g (j - ones) (i+1)
+          where
+            ones = toEnum $ popCount value
+            value :: Word
+            value = byteArr `indexByteArray` i
+
+
+-- |
+-- Number of bits in a 'Word'.
+--
+-- Used for "broadword programming."
+{-# INLINE bitsInWord #-}
+bitsInWord :: Word
+bitsInWord = toEnum $ finiteBitSize (undefined :: Word)
+
+
+-- |
+-- Clever use of 'popCount' and masking to get the number of set bits up to,
+-- /but not including/,  index "k."
+wordRank
+  :: Word -- ^ Input 'Word'
+  -> Word -- ^ Index k, upt to which we count all set bits, k in range [ 0, finiteBitCount - 1 ]
+  -> Word -- ^ THe number of bits set within index "k."
+wordRank v x = toEnum . popCount $ suffixOnes .&. v
+  where
+    suffixOnes = (1 `shiftL` (fromEnum x)) - 1
+
+
+-- |
+-- Perform binary search with 'popCount' to locate the k-th set bit
+wordSelect
+  :: Word -- ^ Input 'Word'
+  -> Word -- ^ Find the k-th set bit, k in range [ 0, finiteBitCount - 1 ]
+  -> Word -- ^ The index of the k-th set bit
+wordSelect v k = go 0 63 k
+  where
+    go :: Word -> Word -> Word -> Word
+    go  lb ub x
+      | lb + 1 == ub = if x == 0 && v `testBit` fromEnum lb then lb else ub
+      | otherwise =
+          let !lowOnes =  toEnum . popCount $ lowMask .&. v
+          in  if lowOnes > x
+              then go lb mb x
+              else go (mb + 1) ub (x - lowOnes)
+      where
+        mb = ((ub - lb) `div` 2) + lb
+        lowMask = makeMask lb mb
+
+        makeMask i j = wideMask `xor` thinMask
+          where
+            thinMask = ((1 `shiftL` fromEnum i) - 1)
+            wideMask
+              | j == bitsInWord - 1 = maxBound :: Word
+              | otherwise = (1 `shiftL` (fromEnum j + 1)) - 1
 
 
 toInt :: Word -> Maybe Int
