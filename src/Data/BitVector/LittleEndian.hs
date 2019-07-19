@@ -42,10 +42,14 @@
 -- convert the 'BitVector' using either 'toSignedNumber' or 'toUnsignedNumber'.
 --
 -- This module defines 'rank' and 'select' operations for 'BitVector' as a
--- succinct data structure. 
+-- <https://en.wikipedia.org/wiki/Succinct_data_structure succinct data structure>.
+-- These operations are not /o(1)/ so 'BitVector' is not a /true/ succinct data
+-- structure. However, it could potentially be extend to support this in the
+-- future.
 -----------------------------------------------------------------------------
 
 {-# LANGUAGE BangPatterns       #-}
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE MagicHash          #-}
@@ -101,10 +105,20 @@ data  BitVector
     = BV
     { dim :: {-# UNPACK #-} !Word -- ^ The /dimension/ of a bit vector.
     , nat :: !Natural             -- ^ The value of a bit vector, as a natural number.
-    } deriving ( Data
-               , Generic
-               , Typeable
-               )
+    } deriving
+#ifdef MIN_VERSION_GLASGOW_HASKELL
+#if MIN_VERSION_GLASGOW_HASKELL(8,2,0,0)
+         ( Data             -- ^ @since 0.1.0
+         , Generic          -- ^ @since 0.1.0
+         , Typeable         -- ^ @since 0.1.0
+         )
+#else
+         ( Data
+         , Generic
+         , Typeable
+         )
+#endif
+#endif
 
 
 -- |
@@ -141,7 +155,7 @@ instance Arbitrary BitVector where
       where
         allBitsOn     = genBitVector $ Just True
         allBitsOff    = genBitVector $ Just False
-        anyBitValue   = genBitVector $ Nothing
+        anyBitValue   = genBitVector   Nothing
         
         boundaryValue = do
             let wrdVal = maxBound :: Word
@@ -1228,7 +1242,7 @@ rank (BV w natVal) k =
 -- >>> select bv 1  -- Find the 0-indexed position of the second one bit
 -- Just 65
 --
--- >>> select bv 2  -- Out-of-bounds `select` fails
+-- >>> select bv 2  -- There is no 3rd set bit, `select` fails
 -- Nothing
 select
   :: BitVector
@@ -1275,7 +1289,7 @@ wordRank
   -> Word -- ^ THe number of bits set within index "k."
 wordRank v x = toEnum . popCount $ suffixOnes .&. v
   where
-    suffixOnes = (1 `shiftL` (fromEnum x)) - 1
+    suffixOnes = (1 `shiftL` fromEnum x) - 1
 
 
 -- |
@@ -1284,7 +1298,7 @@ wordSelect
   :: Word -- ^ Input 'Word'
   -> Word -- ^ Find the k-th set bit, k in range [ 0, finiteBitCount - 1 ]
   -> Word -- ^ The index of the k-th set bit
-wordSelect v k = go 0 63 k
+wordSelect v = go 0 63
   where
     go :: Word -> Word -> Word -> Word
     go  lb ub x
@@ -1300,7 +1314,7 @@ wordSelect v k = go 0 63 k
 
         makeMask i j = wideMask `xor` thinMask
           where
-            thinMask = ((1 `shiftL` fromEnum i) - 1)
+            thinMask = (1 `shiftL` fromEnum i) - 1
             wideMask
               | j == bitsInWord - 1 = maxBound :: Word
               | otherwise = (1 `shiftL` (fromEnum j + 1)) - 1

@@ -2,6 +2,11 @@
 
   * None
 
+### [v1.1.0][5]
+
+  * Added `rank` and `select` functions
+
+
 ### [v1.0.1][4]
 
   * Correcting Eq instance to test for value equality and not construction equality
@@ -72,3 +77,4 @@
 [2]: https://github.com/recursion-ninja/bv-little/tree/v0.1.2
 [3]: https://github.com/recursion-ninja/bv-little/tree/v1.0.0
 [4]: https://github.com/recursion-ninja/bv-little/tree/v1.0.1
+[5]: https://github.com/recursion-ninja/bv-little/tree/v1.1.0

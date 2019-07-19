@@ -77,6 +77,7 @@ install:
   - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
   - cabal --version
   - cabal update
+  - cabal configure --enable-coverage --enable-benchmarks --enable-tests
 
   # Overlay Hackage Package Index for GHC HEAD: https://github.com/hvr/head.hackage
   - GHCHEAD=${GHCHEAD-false}
@@ -98,14 +99,14 @@ install:
   # Install dependencies and utility programs
   - |
     if $GHCHEAD; then
-      cabal install --enable-benchmarks --enable-documentation --enable-tests --only-dependencies --allow-newer
+      cabal install --only-dependencies --allow-newer
     else
       cabal install --enable-benchmarks --enable-documentation --enable-tests --only-dependencies
     fi
+
   - cabal install hpc
 
 script:
-  - cabal configure --enable-coverage --enable-benchmarks --enable-tests
   - cabal sdist
   - cabal build
   - cabal test --show-details=always
