@@ -1,6 +1,8 @@
 ### Unreleased Changes
 
-  * None
+  * Added preliminary benchmarks for
+
+  * Updated test suite to be more reliable
 
 ### [v1.1.0][5]
 

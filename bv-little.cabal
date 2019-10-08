@@ -177,3 +177,51 @@ benchmark benchmark-suite
                     Operator.Binary.Logical
                     Operator.Unary.Logical
                     
+
+
+benchmark benchmark-heap-stack
+
+  type:             exitcode-stdio-1.0
+
+  main-is:          HeapStack.hs
+
+  build-depends:      base             >= 4.5.1 && < 5
+                    , bv-little
+                    , criterion
+                    , deepseq          >= 1.4.1.1
+                    , hashable         >= 1.2.3.2
+                    , mono-traversable >= 1.0.5.0
+                    , QuickCheck       >= 2.8
+                    , smallcheck       >= 1.1.5
+
+  if !impl(ghc >= 8.0)
+
+    build-depends:    semigroups       >= 0.18  && < 1.0
+
+  default-language: Haskell2010
+
+  ghc-options:      -O2
+                    -ddump-simpl-stats
+                    -threaded
+                    -fdicts-cheap
+                    -fmax-simplifier-iterations=10
+                    -fno-full-laziness
+                    -fspec-constr-count=6
+                    -rtsopts
+                    -prof
+
+                    -- Sanity check warnings
+                    -Wall
+                    -fwarn-dodgy-foreign-imports
+                    -fwarn-incomplete-record-updates
+                    -fwarn-incomplete-uni-patterns
+                    -fwarn-overlapping-patterns
+
+                    -- Turn off type default warnings
+                    -fno-warn-type-defaults
+
+  hs-source-dirs:   bench, util
+
+  other-modules:    Operator.Binary.Comparison
+                    Operator.Binary.Logical
+                    Operator.Unary.Logical

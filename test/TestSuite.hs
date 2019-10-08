@@ -683,7 +683,7 @@ bitVectorRankSelect = testGroup "BitVector rank/select"
 
     rankBitOr :: NonNegative Int -> NonNegative Int -> Property
     rankBitOr (NonNegative x) (NonNegative y) =
-        x /= y ==>
+        x /= y -=>
           rank (bit x .|. bit y) z' === rank (bit x) (x'+1) + rank (bit y) (y'+1)
       where
         x' = toEnum x
@@ -805,4 +805,9 @@ monoZipEquivelence = testGroup "Equivelence of a MonoZip"
         lhs = getBitVector x
         rhs = getBitVector y
 
-
+{-
+infixr 0 ===>
+(===>) :: QC.Testable prop => Bool -> prop -> Property
+False ===> _ = property True
+True  ===> p = property p
+-}
