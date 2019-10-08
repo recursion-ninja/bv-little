@@ -1,6 +1,10 @@
 ### Unreleased Changes
 
-  * Added preliminary benchmarks for
+  * None
+
+### [v1.1.1][6]
+
+  * Added more benchmarks
 
   * Updated test suite to be more reliable
 
@@ -80,3 +84,4 @@
 [3]: https://github.com/recursion-ninja/bv-little/tree/v1.0.0
 [4]: https://github.com/recursion-ninja/bv-little/tree/v1.0.1
 [5]: https://github.com/recursion-ninja/bv-little/tree/v1.1.0
+[5]: https://github.com/recursion-ninja/bv-little/tree/v1.1.1

@@ -3,14 +3,19 @@
 [![Build Status](https://travis-ci.org/recursion-ninja/bv-little.svg?branch=master)](https://travis-ci.org/recursion-ninja/bv-little)
 [![Coverage Status](https://coveralls.io/repos/github/recursion-ninja/bv-little/badge.svg?branch=master)](https://coveralls.io/github/recursion-ninja/bv-little?branch=master)
 [![License FreeBSD](https://img.shields.io/badge/license-FreeBSD-brightgreen.svg)](http://opensource.org/licenses/BSD-3-Clause)
-[![Hackage](https://img.shields.io/hackage/v/bv-little.svg?style=flat)](https://hackage.haskell.org/package/bv-little)
-[![Stackage Nightly](http://stackage.org/package/bv-little/badge/nightly)](http://stackage.org/nightly/package/bv-little)
+
+[![Hackage](https://img.shields.io/hackage/v/bv-little.svg?style=flat&color=brightgreen)](https://hackage.haskell.org/package/bv-little)
+[![Hackage CI](https://matrix.hackage.haskell.org/api/v2/packages/bv-little/badge)](https://matrix.hackage.haskell.org/package/bv-little)
+
 [![Stackage LTS](http://stackage.org/package/bv-little/badge/lts)](http://stackage.org/lts/package/bv-little)
+[![Stackage Nightly](http://stackage.org/package/bv-little/badge/nightly?style=flat&color=green)](http://stackage.org/nightly/package/bv-little)
 
 
-This package contains an efficient implementation of little-endian bit vectors. It implements most applicable typeclasses and also conversions to and from signed or unsigned numbers. Care has been taken to balance the number of transitive dependencies with respect to functionality provided.
+This package contains an efficient implementation of *little-endian, immutable* bit vectors. It implements most applicable typeclasses and also conversions to and from signed or unsigned numbers.
 
-For an implementation of big-endian bit vectors, use the [`bv`](https://hackage.haskell.org/package/bv) package.
+For an implementation of *big-endian, immutable* bit vectors, use the [`bv`](https://hackage.haskell.org/package/bv) package.
+
+For an implementation of *little-endian, mutable* bit vectors, use the [`bitvec`](https://hackage.haskell.org/package/bitvec) package.
 
 #### Tests
 
@@ -26,7 +31,7 @@ The `TestSuite.hs` file contains the specification. It can be run by invoking an
 
 #### Benchmarks
 
-The benchmarks provide an empirical check for the asymptotic complexity of data structure operations and also provide easy metrics for detecting performance regressions.
+The benchmarks provide an empyrical check for the asymptotic complexity of data structure operations and also provide easy metrics for detecting performance regressions.
 
 The `Benchmaks.hs` file contains these metrics. It can be run by invoking any of the following commands:
 
