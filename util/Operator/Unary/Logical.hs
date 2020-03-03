@@ -14,7 +14,6 @@ module Operator.Unary.Logical
 import Control.DeepSeq
 import Data.Data
 import Data.Monoid ()
-import Data.Semigroup
 import GHC.Generics
 import Test.QuickCheck        hiding (generate)
 import Test.SmallCheck.Series

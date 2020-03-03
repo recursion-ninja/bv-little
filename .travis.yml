@@ -6,16 +6,9 @@ cabal: "3.0"
 cache:
   directories:
     - "$HOME/.cabal/store"
-    - "$HOME/.stack"
-    - "$TRAVIS_BUILD_DIR/.stack-work"
 
 matrix:
   include:
-    - ghc: 7.10.3
-    - ghc: 8.0.2
-    - ghc: 8.2.2
-    - ghc: 8.4.4
-    - ghc: 8.6.5
     - ghc: 8.8.1
 
 install:

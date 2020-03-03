@@ -6,10 +6,10 @@ import Control.DeepSeq
 import Criterion.Main
 import Data.Bits
 import Data.BitVector.LittleEndian
+import Data.BitVector.LittleEndian.Instances ()
 import Data.List (nubBy)
 import Data.Hashable
 import Data.MonoTraversable
-import Data.Semigroup
 import Operator.Binary.Logical
 import Operator.Unary.Logical
 

@@ -7,11 +7,11 @@ import Control.Exception
 import Criterion.Main
 import Data.Bits
 import Data.BitVector.LittleEndian
+import Data.BitVector.LittleEndian.Instances ()
 import Data.Foldable
 import Data.List (nubBy)
 import Data.Hashable
 import Data.MonoTraversable
-import Data.Semigroup
 import Numeric.Natural
 import Operator.Binary.Logical
 import Operator.Unary.Logical

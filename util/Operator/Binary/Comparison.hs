@@ -14,7 +14,6 @@ import Data.Data
 import Data.List                     (elemIndex)
 import Data.Maybe                    (fromJust)
 import Data.Monoid                   ()
-import Data.Semigroup
 import GHC.Generics
 import Test.QuickCheck        hiding (generate)
 import Test.SmallCheck.Series

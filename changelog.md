@@ -2,6 +2,14 @@
 
   * None
 
+### [v1.2.0][7]
+
+  * Restructuring library to expose instances in a refined, "opt-in" manner
+
+  * Dropped support for GHC < 8.8.1
+
+  * Added `Binary` instance
+
 ### [v1.1.1][6]
 
   * Added more benchmarks
@@ -84,4 +92,5 @@
 [3]: https://github.com/recursion-ninja/bv-little/tree/v1.0.0
 [4]: https://github.com/recursion-ninja/bv-little/tree/v1.0.1
 [5]: https://github.com/recursion-ninja/bv-little/tree/v1.1.0
-[5]: https://github.com/recursion-ninja/bv-little/tree/v1.1.1
+[6]: https://github.com/recursion-ninja/bv-little/tree/v1.1.1
+[7]: https://github.com/recursion-ninja/bv-little/tree/v1.2.0

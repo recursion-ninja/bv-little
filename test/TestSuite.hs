@@ -10,6 +10,7 @@ module Main ( main ) where
 import           Control.DeepSeq
 import           Data.Bits
 import           Data.BitVector.LittleEndian
+import           Data.BitVector.LittleEndian.Instances ()
 import           Data.BitVector.Visual
 import           Data.Foldable
 import           Data.Functor.Compose
