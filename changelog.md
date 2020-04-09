@@ -10,6 +10,8 @@
 
   * Added `Binary` instance
 
+  * Added `Read` instance
+
 ### [v1.1.1][6]
 
   * Added more benchmarks

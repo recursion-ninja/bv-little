@@ -41,6 +41,7 @@
 
 module Data.BitVector.LittleEndian.Internal where
 
+import Control.Monad (when)
 import Control.DeepSeq
 import Data.Bits
 import Data.Data
@@ -52,10 +53,11 @@ import Data.Ord
 import Data.Primitive.ByteArray
 import Data.Semigroup
 import GHC.Exts
-import GHC.Generics
+import GHC.Generics              (Generic)
 import GHC.Integer.GMP.Internals
 import GHC.Integer.Logarithms
 import GHC.Natural
+import Text.Read
 
 
 -- |
@@ -270,6 +272,23 @@ instance Ord BitVector where
         case comparing dim lhs rhs of
           EQ -> comparing nat lhs rhs
           v  -> v
+
+
+-- |
+-- @since 1.2.0
+instance Read BitVector where
+
+    {-# INLINEABLE readPrec #-}
+    readPrec = do
+        Punc "[" <- lexP
+        w <- step readPrec
+        Punc "]" <- lexP
+        n <- step readPrec
+        -- Check if n exceeds the bit vector's width
+        when (n >= 1 `shiftL` fromEnum w) pfail
+        pure $ BV w n
+
+    readListPrec = readListPrecDefault
 
 
 -- |
