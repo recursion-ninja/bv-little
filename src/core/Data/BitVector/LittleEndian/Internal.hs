@@ -180,7 +180,7 @@ instance Bits BitVector where
 instance Eq BitVector where
 
     {-# INLINE (==) #-}
-    (==) (BV w1 m) (BV w2 n) = w1 == w2 && naturalToBigNat m == naturalToBigNat n
+    (==) (BV w1 m) (BV w2 n) = w1 == w2 && compareBigNat (naturalToBigNat m) (naturalToBigNat n) == EQ
       where
         naturalToBigNat (NatS# w ) = wordToBigNat w
         naturalToBigNat (NatJ# bn) = bn
