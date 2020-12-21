@@ -1,49 +1,136 @@
-on: [push, pull_request]
+on:
+  # Build every pull request, to check for regressions.
+  pull_request:
+
+  # Build when a PR is merged, to update the README's CI badge.
+  push:
+#    branches: [main]
+
+  # Build once a month, to detect missing upper bounds.
+  schedule:
+    - cron: '0 0 1 * *'
+
 name: build
-# adjust THISPACKAGE to be your package name and then have fun
+
 env:
       THISPACKAGE: bv-little
       CONFIG: --enable-tests --enable-benchmarks
+
 defaults:
   run:
     shell: bash
+
 jobs:
+
+  # Check that the project builds with the specified lower bounds.
   build:
+    env:
+      CONSTRAINTS: --project-file=cabal.project.oldest
+    name: lower-bounds-check
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        ghc:  ['7.10.3','8.0.2','8.2.2','8.4.4','8.6.5', '8.8.3','8.10.3','latest']
-        cabal: ['3.2.0.0', 'latest']
-        os: [ubuntu-latest, macOS-latest, windows-latest]
         include:
-          - os: macOS-latest
-            ghc: latest
+          - ghc:   8.8.4
             cabal: latest
-          - os: ubuntu-latest
-            ghc: latest
+            os:    ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        name: caching lower bounds check
+        with:
+          path: |
+            ~/.cabal/store
+            dist-newstyle
+          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
+          # restore keys is a fall back when the freeze plan is different
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.ghc }}-
+
+      - uses: actions/setup-haskell@v1
+        name: Setup Haskell
+        with:
+          ghc-version:   ${{ matrix.ghc   }}
+          cabal-version: ${{ matrix.cabal }}
+
+      - run: cabal update
+      - run: cabal clean
+      - run: cabal configure $CONFIG $CONSTRAINTS
+      - run: cabal freeze    $CONFIG $CONSTRAINTS
+      - run: cabal build --only-dependencies
+      - run: cabal build $CONFIG
+      - run: cabal test
+      - run: cabal check
+      - run: cabal sdist -o `pwd`
+
+
+
+  # Check that the build passes with the recommended snapshot.
+  stack:
+    name: stack-build
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/cache@v2
+      name: Cache Stack Artifacts
+      with:
+        path: |
+          ~/.stack
+          .stack-work
+        key: ${{ runner.os }}-stack-${{ hashFiles(matrix.stack_yaml) }}
+
+    - uses: haskell/actions/setup@v1
+      id:   setup-haskell-stack
+      name: Setup Stack
+      with:
+        enable-stack:    true
+        stack-setup-ghc: true
+        stack-no-global: true
+
+    - name: Build
+      run: |
+        stack build --test --bench --no-run-tests --no-run-benchmarks
+    - name: Test
+      run: |
+        stack test
+
+
+
+  # Cabal build matrix
+  cabal:
+    name: GHC-${{ matrix.ghc }}, cabal${{matrix.cabal}}, ${{matrix.os}}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ghc:   [ '8.8.4', '8.10.2', 'latest' ]
+        cabal: [ '3.2.0.0', 'latest' ]
+        os:    [ ubuntu-latest, macOS-latest ]
+        include:
+          - os:    windows-latest
+            ghc:   8.8.4
+            cabal: 3.2.0.0
+            expect-fail: false
+            
+          - os:    windows-latest
+            ghc:   8.8.4
             cabal: latest
-          - os: windows-latest
-            ghc: '8.10.2.2'
-            cabal: '3.2.0.0'
-            # 8.10.3 is a bug fix for a bad windows packaging
-            # i hope that actions/setup-haskell upstream does a fix to ghc latest to point to this
-    name: GHC${{ matrix.ghc }},cabal${{matrix.cabal}},${{matrix.os}}
-    # double curly brace is a javascript splice or something??
+            expect-fail: false
+
     steps:
       - uses: actions/checkout@v2
       - name: Setup Haskell
-        # uses: actions/setup-haskell@v1.1.4 # the .3 is a bug fix? as is .4
-        # the v1 tag tracks the most recent release for the setup-haskell plugin,
-        # less ci bump exhaustion this way
-        uses: actions/setup-haskell@v1 # had to bump to .3 then .4, i'm tired :). I'd rather track close, but eh
+        uses: actions/setup-haskell@v1
         with:
-          ghc-version: ${{ matrix.ghc }}
+          ghc-version:   ${{ matrix.ghc   }}
           cabal-version: ${{ matrix.cabal }}
       - run: cabal update
       - run: cabal clean
-      - run: cabal configure $CONFIG
-      - run: cabal freeze $CONFIG
+      - run: cabal configure $CONFIG $CONSTRAINTS
+      - run: cabal freeze    $CONFIG $CONSTRAINTS
       - uses: actions/cache@v2
         name: windows caching
         with:
@@ -66,9 +153,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.ghc }}-
         if:  matrix.os != 'windows-latest'
-      - run: cabal build  --only-dependencies
-      - run: cabal build
-      - run: cabal test
-      - run: cabal bench
+      - run: cabal build --only-dependencies
+      - run: cabal build $CONFIG
       - run: cabal check
       - run: cabal sdist -o `pwd`
+
+
+
+

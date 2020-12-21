@@ -22,8 +22,8 @@ description:
 
 build-type:          Simple
 
-tested-with:         GHC == 8.10.1
-                     GHC == 8.8.3
+tested-with:         GHC == 8.10.3
+                     GHC == 8.8.4
 
 extra-source-files:  changelog.md
                      README.md
@@ -101,7 +101,7 @@ library core
                     , deepseq               >= 1.4.1.1
                     , hashable              >= 1.3
                     , integer-gmp           >= 1.0
-                    , primitive             >= 0.6.4.0
+                    , primitive             >= 0.7
 
   default-language: Haskell2010
 
@@ -155,7 +155,7 @@ library instances-mono-traversable-keys
   build-depends:      base                  >= 4.13  && < 5
                     , core
                     , instances-mono-traversable
-                    , keys                  >= 3.10.1
+                    , keys                  >= 3.12
                     , mono-traversable      >= 1.0
                     , mono-traversable-keys >= 0.1.0
 
@@ -191,7 +191,7 @@ library instances-quickcheck
         
   build-depends:      base                  >= 4.13  && < 5
                     , core
-                    , QuickCheck            >= 2.8
+                    , QuickCheck            >= 2.13
 
   default-language: Haskell2010
 
@@ -230,13 +230,13 @@ Test-Suite test-suite
                     , hashable              >= 1.2.3.2
                     , mono-traversable      >= 1.0.5.0
                     , mono-traversable-keys >= 0.1.0
-                    , QuickCheck            >= 2.8
+                    , QuickCheck            >= 2.13
                     , smallcheck            >= 1.1.5
                     , tasty
                     , tasty-hunit
                     , tasty-quickcheck
                     , tasty-smallcheck
-                    , text-show             >= 3.2.1
+                    , text-show             >= 3.8
 
   if !impl(ghc >= 8.0)
 
