@@ -25,6 +25,11 @@ script:
   - cabal new-haddock                                                             --haddock-all --haddock-hyperlink-source --haddock-internal --haddock-for-hackage
   - cabal check
 
+after_script:
+  - export PATH=~/.cabal/bin:$PATH
+  - cabal install hpc-coveralls
+  - hpc-coveralls --coverage-mode=StrictlyFullLines --exclude-dir=bench --exclude-dir=test --exclude-dir=util test-suite
+
 git:
   depth: 5
 
