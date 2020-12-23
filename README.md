@@ -1,7 +1,7 @@
 ## Efficient little-endian bit vector Haskell library
 
 [![Build Status](https://travis-ci.org/recursion-ninja/bv-little.svg?branch=master)](https://travis-ci.org/recursion-ninja/bv-little)
-[![Workflow Status](https://github.com/actions/hello-world/workflows/.github/workflows/main.yml/badge.svg?branch=master)](https://github.com/recursion-ninja/bv-little/actions)
+[![Workflow Status](https://github.com/recursion-ninja/bv-little/workflows/build/badge.svg?branch=master)](https://github.com/recursion-ninja/bv-little/actions)
 [![Coverage Status](https://coveralls.io/repos/github/recursion-ninja/bv-little/badge.svg?branch=master)](https://coveralls.io/github/recursion-ninja/bv-little?branch=master)
 [![License FreeBSD](https://img.shields.io/badge/license-FreeBSD-brightgreen.svg)](http://opensource.org/licenses/BSD-3-Clause)
 
