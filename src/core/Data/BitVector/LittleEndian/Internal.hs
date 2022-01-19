@@ -66,11 +66,15 @@ data  BitVector
     = BV
     { dim :: {-# UNPACK #-} !Word -- ^ The /dimension/ of a bit vector.
     , nat :: !Natural             -- ^ The value of a bit vector, as a natural number.
-    } deriving stock
-         ( Data             -- ^ @since 0.1.0
-         , Generic          -- ^ @since 0.1.0
-         , Typeable         -- ^ @since 0.1.0
-         )
+    }
+    deriving stock
+        ( Data
+          -- ^ @since 0.1.0
+        , Generic
+          -- ^ @since 0.1.0
+        , Typeable
+          -- ^ @since 0.1.0
+        )
 
 
 -- |
