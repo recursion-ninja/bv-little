@@ -29,31 +29,47 @@
 --
 -----------------------------------------------------------------------------
 
-{-# LANGUAGE BangPatterns       #-}
-{-# LANGUAGE CPP                #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE MagicHash          #-}
-{-# LANGUAGE OverloadedStrings  #-}
-{-# LANGUAGE Trustworthy        #-}
-{-# LANGUAGE TypeFamilies       #-}
+{-# Language BangPatterns #-}
+{-# Language CPP #-}
+{-# Language DeriveDataTypeable #-}
+{-# Language DeriveGeneric #-}
+{-# Language DerivingStrategies #-}
+{-# Language MagicHash #-}
+{-# Language OverloadedStrings #-}
+{-# Language Trustworthy #-}
+{-# Language TypeFamilies #-}
+{-# Language UnicodeSyntax #-}
 
-module Data.BitVector.LittleEndian.Internal where
+module Data.BitVector.LittleEndian.Internal
+    ( BitVector(..)
+    , fromBits
+    , fromNumber
+    , toBits
+    , toSignedNumber
+    , toUnsignedNumber
+    , dimension
+    , isZeroVector
+    , subRange
+    , rank
+    , select
+--    , bitsInWord
+--    , wordRank
+--    , wordSelect
+    ) where
 
-import Control.Monad (when)
 import Control.DeepSeq
+import Control.Monad (when)
 import Data.Bits
 import Data.Data
 import Data.Foldable
 import Data.Hashable
-import Data.List.NonEmpty        (NonEmpty(..))
-import Data.Monoid               ()
+import Data.List.NonEmpty (NonEmpty(..))
+import Data.Monoid ()
 import Data.Ord
 import Data.Primitive.ByteArray
 import Data.Semigroup
 import GHC.Exts
-import GHC.Generics              (Generic)
+import GHC.Generics (Generic)
 import GHC.Integer.GMP.Internals
 import GHC.Integer.Logarithms
 import GHC.Natural
@@ -62,19 +78,17 @@ import Text.Read
 
 -- |
 -- A little-endian bit vector of non-negative dimension.
-data  BitVector
+data BitVector 
     = BV
-    { dim :: {-# UNPACK #-} !Word -- ^ The /dimension/ of a bit vector.
-    , nat :: !Natural             -- ^ The value of a bit vector, as a natural number.
+    { dim :: {-# UNPACK #-} !Word
+      -- ^ The /dimension/ of a bit vector.
+    , nat :: !Natural
+      -- ^ The value of a bit vector, as a natural number.
     }
-    deriving stock
-        ( Data
-          -- ^ @since 0.1.0
-        , Generic
-          -- ^ @since 0.1.0
-        , Typeable
-          -- ^ @since 0.1.0
-        )
+    -- ^ @since 0.1.0
+    -- ^ @since 0.1.0
+    -- ^ @since 0.1.0
+    deriving stock (Data, Generic)
 
 
 -- |
@@ -97,24 +111,25 @@ instance Bits BitVector where
     zeroBits = BV 0 0
 
     {-# INLINE bit #-}
-    bit i = BV (succ $ toEnum i)  (shiftL 1 i)
+    bit i = BV (succ $ toEnum i) (shiftL 1 i)
 
     {-# INLINE clearBit #-}
     -- We do this more complicated operation rather than call 'clearBit'
     -- because it is undefined for Natural in base < 4.10.0.0
     clearBit bv@(BV w n) i
-      | i < 0 || toEnum i >= w = bv
-      | otherwise =
-        let !allBits = pred . shiftL 1 $ fromEnum w
-            !mask    = bit i `xor` allBits
-        in  BV w $ n .&. mask
+        | i < 0 || toEnum i >= w
+        = bv
+        | otherwise
+        = let
+              !allBits = pred . shiftL 1 $ fromEnum w
+              !mask    = bit i `xor` allBits
+          in  BV w $ n .&. mask
 
     {-# INLINE setBit #-}
     setBit bv@(BV w n) i
-      | i < 0 = bv
-      | otherwise = BV (max w j) $ n `setBit` i
-      where
-        !j = toEnum i + 1
+        | i < 0     = bv
+        | otherwise = BV (max w j) $ n `setBit` i
+        where !j = toEnum i + 1
 
     {-# INLINE testBit #-}
     testBit (BV w n) i = i >= 0 && toEnum i < w && n `testBit` i
@@ -129,51 +144,51 @@ instance Bits BitVector where
 
     {-# INLINE shiftL #-}
     shiftL (BV w n) k
-      | toEnum k > w = BV w 0
-      | otherwise    = BV w $ shiftL n k .&. pred (shiftL 1 (fromEnum w))
+        | toEnum k > w = BV w 0
+        | otherwise    = BV w $ shiftL n k .&. pred (shiftL 1 (fromEnum w))
 
     {-# INLINE shiftR #-}
     shiftR (BV w n) k
-      | toEnum k > w = BV w 0
-      | otherwise    = BV w $ shiftR n k
+        | toEnum k > w = BV w 0
+        | otherwise    = BV w $ shiftR n k
 
     {-# INLINE rotateL #-}
     rotateL bv          0 = bv
     rotateL bv@(BV 0 _) _ = bv
     rotateL bv@(BV 1 _) _ = bv
     rotateL bv@(BV w n) k
-      | k <  0    = bv
-      | j >= w    = go . fromEnum $ j `mod` w
-      | otherwise = go k
-      where
-        !j     = toEnum k
-        go  0  = bv
-        go !i  = BV w $ h + l
-          where
-            !v = fromEnum w
-            !d = v - i
-            !m = pred $ shiftL 1 d
-            !l = n `shiftR` d
-            !h = (n .&. m) `shiftL` i
+        | k < 0     = bv
+        | j >= w    = go . fromEnum $ j `mod` w
+        | otherwise = go k
+        where
+            !j = toEnum k
+            go 0 = bv
+            go i = BV w $ h + l
+                where
+                    !v = fromEnum w
+                    !d = v - i
+                    !m = pred $ shiftL 1 d
+                    !l = n `shiftR` d
+                    !h = (n .&. m) `shiftL` i
 
     {-# INLINE rotateR #-}
     rotateR bv          0 = bv
     rotateR bv@(BV 0 _) _ = bv
     rotateR bv@(BV 1 _) _ = bv
     rotateR bv@(BV w n) k
-      | k <  0    = bv
-      | j >= w    = go . fromEnum $ j `mod` w
-      | otherwise = go k
-      where
-        !j     = toEnum k
-        go  0  = bv
-        go !i  = BV w $ h + l
-          where
-            !v = fromEnum w
-            !d = v - i
-            !m = pred $ shiftL 1 i
-            !l = n `shiftR` i
-            !h = (n .&. m) `shiftL` d
+        | k < 0     = bv
+        | j >= w    = go . fromEnum $ j `mod` w
+        | otherwise = go k
+        where
+            !j = toEnum k
+            go 0 = bv
+            go i = BV w $ h + l
+                where
+                    !v = fromEnum w
+                    !d = v - i
+                    !m = pred $ shiftL 1 i
+                    !l = n `shiftR` i
+                    !h = (n .&. m) `shiftL` d
 
     {-# INLINE popCount #-}
     popCount = popCount . nat
@@ -184,10 +199,10 @@ instance Bits BitVector where
 instance Eq BitVector where
 
     {-# INLINE (==) #-}
-    (==) (BV w1 m) (BV w2 n) = w1 == w2 && compareBigNat (naturalToBigNat m) (naturalToBigNat n) == EQ
-      where
-        naturalToBigNat (NatS# w ) = wordToBigNat w
-        naturalToBigNat (NatJ# bn) = bn
+    (==) (BV w1 m) (BV w2 n) = w1 == w2 && (naturalToBigNat m) `compare` (naturalToBigNat n) == EQ
+        where
+            naturalToBigNat (NatS# w ) = wordToBigNat w
+            naturalToBigNat (NatJ# bn) = bn
 
 
 -- |
@@ -199,36 +214,31 @@ instance FiniteBits BitVector where
 
     {-# INLINE countTrailingZeros #-}
     countTrailingZeros (BV w n) = max 0 $ fromEnum w - lastSetBit - 1
-      where
-        lastSetBit = I# (integerLog2# (toInteger n))
+        where lastSetBit = I# (integerLog2# (toInteger n))
 
     {-# INLINE countLeadingZeros #-}
-    countLeadingZeros (BV w      0) = fromEnum w
-    countLeadingZeros (BV w natVal) =
-        case natVal of
-          NatS#      v  -> countTrailingZeros $ iMask .|. W# v
-          NatJ# (BN# v) -> f $ ByteArray v
-      where
-        iMask = complement zeroBits `xor` (2 ^ w - 1)
-        !x = fromEnum w
+    countLeadingZeros (BV w 0     ) = fromEnum w
+    countLeadingZeros (BV w natVal) = case natVal of
+        NatS# v       -> countTrailingZeros $ iMask .|. W# v
+        NatJ# (BN# v) -> f $ ByteArray v
+        where
+            iMask = complement zeroBits `xor` (2 ^ w - 1)
+            !x    = fromEnum w
 
-        f :: ByteArray -> Int
-        f byteArr = g 0
-          where
-            (q, r) = x `quotRem` fromEnum bitsInWord
-            wMask  = complement zeroBits `xor` (2 ^ r - 1) :: Word
+            f :: ByteArray -> Int
+            f byteArr = g 0
+                where
+                    (q, r) = x `quotRem` fromEnum bitsInWord
+                    wMask  = complement zeroBits `xor` (2 ^ r - 1) :: Word
 
-            g :: Int -> Int
-            g !i
-              | i >= q = countTrailingZeros $ wMask .|. value
-              | otherwise =
-                  let !v = countTrailingZeros value
-                  in  if v == fromEnum bitsInWord
-                      then v + g (i+1)
-                      else v
-              where
-                value :: Word
-                value = byteArr `indexByteArray` i
+                    g :: Int -> Int
+                    g !i
+                        | i >= q    = countTrailingZeros $ wMask .|. value
+                        | otherwise = let !v = countTrailingZeros value
+                                      in  if v == fromEnum bitsInWord then v + g (i + 1) else v
+                        where
+                            value :: Word
+                            value = byteArr `indexByteArray` i
 
 
 -- |
@@ -248,10 +258,9 @@ instance Monoid BitVector where
     mappend = (<>)
 
     {-# INLINE mconcat #-}
-    mconcat bs =
-        case bs of
-          []   -> mempty
-          x:xs -> sconcat $ x:|xs
+    mconcat bs = case bs of
+        []     -> mempty
+        x : xs -> sconcat $ x :| xs
 
     {-# INLINE mempty #-}
     mempty = BV 0 0
@@ -272,22 +281,21 @@ instance NFData BitVector where
 instance Ord BitVector where
 
     {-# INLINE compare #-}
-    compare lhs rhs =
-        case comparing dim lhs rhs of
-          EQ -> comparing nat lhs rhs
-          v  -> v
+    compare lhs rhs = case comparing dim lhs rhs of
+        EQ -> comparing nat lhs rhs
+        v  -> v
 
 
 -- |
 -- @since 1.2.0
 instance Read BitVector where
 
-    {-# INLINEABLE readPrec #-}
+    {-# INLINABLE readPrec #-}
     readPrec = do
         Punc "[" <- lexP
-        w <- step readPrec
+        w        <- step readPrec
         Punc "]" <- lexP
-        n <- step readPrec
+        n        <- step readPrec
         -- Check if n exceeds the bit vector's width
         when (n >= 1 `shiftL` fromEnum w) pfail
         pure $ BV w n
@@ -304,27 +312,27 @@ instance Semigroup BitVector where
 
     {-# INLINABLE sconcat #-}
     sconcat xs = BV w' n'
-      where
-        (w', _, n') = foldl' f (0, 0, 0) xs
-        f (bitCountW, bitCountI, natVal) (BV w n) =
-          (bitCountW + w, bitCountI + fromEnum w, natVal + (n `shiftL` bitCountI))
+        where
+            (w', _, n') = foldl' f (0, 0, 0) xs
+            f (bitCountW, bitCountI, natVal) (BV w n) =
+                (bitCountW + w, bitCountI + fromEnum w, natVal + (n `shiftL` bitCountI))
 
     {-# INLINE stimes #-}
-    stimes 0  _       = mempty
+    stimes 0 _        = mempty
     stimes e (BV w n) = BV limit $ go start n
-      where
-        !x     = fromEnum w
-        !start = fromEnum $ limit - w
-        !limit = (toEnum . fromEnum) e * w
-        go  0 !acc = acc
-        go !k !acc = go (k-x) $ (n `shiftL` k) + acc
+        where
+            !x     = fromEnum w
+            !start = fromEnum $ limit - w
+            !limit = (toEnum . fromEnum) e * w
+            go 0 !acc = acc
+            go k !acc = go (k - x) $ (n `shiftL` k) + acc
 
 
 -- |
 -- @since 0.1.0
 instance Show BitVector where
 
-    show (BV w n) = mconcat [ "[", show w, "]", show n ]
+    show (BV w n) = mconcat ["[", show w, "]", show n]
 
 
 -- |
@@ -347,11 +355,12 @@ instance Show BitVector where
 fromBits :: Foldable f => f Bool -> BitVector
 fromBits bs = BV (toEnum n) k
   -- NB: 'setBit' is a GMP function, faster than regular addition.
-  where
-    (!n, !k) = foldl' go (0, 0) bs
-    go (!i, !v) b
-      | b         = (i+1, v `setBit` i)
-      | otherwise = (i+1, v)
+    where
+        (!n, !k) = foldl' go (0, 0) bs
+        go :: Bits b => (Int, b) -> Bool -> (Int, b)
+        go (!i, !v) b
+            | b         = (i + 1, v `setBit` i)
+            | otherwise = (i + 1, v)
 
 
 -- |
@@ -373,10 +382,9 @@ fromBits bs = BV (toEnum n) k
 {-# INLINE toBits #-}
 toBits :: BitVector -> [Bool]
 toBits (BV w n) = go (fromEnum w) []
-  where
-    go 0 bs = bs
-    go i bs = let !j = i - 1
-              in go j $ n `testBit` j : bs
+    where
+        go 0 bs = bs
+        go i bs = let !j = i - 1 in go j $ n `testBit` j : bs
 
 
 -- |
@@ -408,20 +416,21 @@ toBits (BV w n) = go (fromEnum w) []
 --
 -- >>> fromNumber 6 96
 -- [6]32
-{-# INLINE[1] fromNumber #-}
+{-# INLINE [1] fromNumber #-}
 fromNumber
-  :: Integral v
-  => Word  -- ^ dimension of bit vector
-  -> v     -- ^ /signed, little-endian/ integral value
-  -> BitVector
+    :: Integral v
+    => Word  -- ^ dimension of bit vector
+    -> v     -- ^ /signed, little-endian/ integral value
+    -> BitVector
 fromNumber !dimValue !intValue = BV dimValue . intToNat $ mask .&. v
-  where
-    !v | signum int < 0 = negate $ shiftL 1 intBits - int
-       | otherwise      = int
+    where
+        !v
+            | signum int < 0 = negate $ shiftL 1 intBits - int
+            | otherwise      = int
 
-    !int     = toInteger intValue
-    !intBits = I# (integerLog2# int)
-    !mask    = 2 ^ dimValue - 1
+        !int     = toInteger intValue
+        !intBits = I# (integerLog2# int)
+        !mask    = 2 ^ dimValue - 1
 
 
 {-# RULES
@@ -459,10 +468,11 @@ fromNumber !dimValue !intValue = BV dimValue . intToNat $ mask .&. v
 {-# INLINE toSignedNumber #-}
 toSignedNumber :: Num a => BitVector -> a
 toSignedNumber (BV w n) = fromInteger v
-  where
-    !i = toInteger n
-    !v | n `testBit` (fromEnum w - 1) = negate $ shiftL 1 (fromEnum w) - i
-       | otherwise = i
+    where
+        !i = toInteger n
+        !v
+            | n `testBit` (fromEnum w - 1) = negate $ shiftL 1 (fromEnum w) - i
+            | otherwise = i
 
 
 -- |
@@ -491,7 +501,7 @@ toSignedNumber (BV w n) = fromInteger v
 --
 -- >>> toSignedNumber [4]15
 -- 15
-{-# INLINE[1] toUnsignedNumber #-}
+{-# INLINE [1] toUnsignedNumber #-}
 toUnsignedNumber :: Num a => BitVector -> a
 toUnsignedNumber = fromInteger . toInteger . nat
 
@@ -572,22 +582,20 @@ isZeroVector = (0 ==) . nat
 {-# INLINE subRange #-}
 subRange :: (Word, Word) -> BitVector -> BitVector
 subRange (!lower, !upper) (BV _ n)
-  | lower > upper = zeroBits
-  | otherwise     =
-    case toInt lower of
-      Nothing -> zeroBits
-      Just i  ->
-        let b = n `shiftR` i
-        in  case toInt upper of
-              Nothing ->
-                let m = toEnum $ maxBound - i + 1
-                in  BV m $  n `shiftR` i
-              Just j  ->
-                let x = j - i
-                    m | x == maxBound = x
-                      | otherwise     = x + 1
-                in  BV (toEnum m) $ b .&. pred (1 `shiftL` m)
-
+    | lower > upper = zeroBits
+    | otherwise = case toInt lower of
+        Nothing -> zeroBits
+        Just i ->
+            let b = n `shiftR` i
+            in
+                case toInt upper of
+                    Nothing -> let m = toEnum $ maxBound - i + 1 in BV m $ n `shiftR` i
+                    Just j ->
+                        let x = j - i
+                            m
+                                | x == maxBound = x
+                                | otherwise     = x + 1
+                        in  BV (toEnum m) $ b .&. pred (1 `shiftL` m)
 
 
 -- |
@@ -626,28 +634,28 @@ subRange (!lower, !upper) (BV _ n)
 -- >>> rank bv 129  -- Out-of-bounds, fails gracefully
 -- 2
 rank
-  :: BitVector
-  -> Word -- ^ \(k\), the rank index 
-  -> Word -- ^ Set bits within the rank index
-rank             _ 0 = 0 -- There can be no set bits /before/ the 0-th bit
-rank (BV 0      _) _ = 0 -- There can be no set bits in a bit-vector of length 0
+    :: BitVector
+    -> Word -- ^ \(k\), the rank index
+    -> Word -- ^ Set bits within the rank index
+rank _        0 = 0 -- There can be no set bits /before/ the 0-th bit
+rank (BV 0 _) _ = 0 -- There can be no set bits in a bit-vector of length 0
 rank (BV w natVal) k =
     let j = min k w
-    in  case natVal of
-          NatS#      v  -> wordRank (W# v) j
-          NatJ# (BN# v) -> f (ByteArray v) j
-  where
-    f :: ByteArray -> Word -> Word
-    f byteArr x = g x 0
-      where
-        g :: Word -> Int -> Word
-        g !j !i
-          | j < bitsInWord = wordRank value j
-          | otherwise = let !v = toEnum $ popCount value
-                        in   v + g (j - bitsInWord) (i+1)
-          where
-            value :: Word
-            value = byteArr `indexByteArray` i
+    in
+        case natVal of
+            NatS# v       -> wordRank (W# v) j
+            NatJ# (BN# v) -> f (ByteArray v) j
+    where
+        f :: ByteArray -> Word -> Word
+        f byteArr x = g x 0
+            where
+                g :: Word -> Int -> Word
+                g !j !i
+                    | j < bitsInWord = wordRank value j
+                    | otherwise      = let !v = toEnum $ popCount value in v + g (j - bitsInWord) (i + 1)
+                    where
+                        value :: Word
+                        value = byteArr `indexByteArray` i
 
 
 -- |
@@ -674,30 +682,26 @@ rank (BV w natVal) k =
 -- >>> select bv 2  -- There is no 3rd set bit, `select` fails
 -- Nothing
 select
-  :: BitVector
-  -> Word        -- ^ \(k\), the select index 
-  -> Maybe Word  -- ^ index of the k-th set bit
-select (BV 0      _) _ = Nothing -- There can be no set bits in a bit-vector of length 0
-select (BV w natVal) k =
-    case natVal of
-      NatS#      v  -> let !u = W# v
-                       in  if toEnum (popCount u) <= k
-                           then Nothing
-                           else Just $ wordSelect u k
-      NatJ# (BN# v) -> f (ByteArray v) k
-  where
-    f :: ByteArray -> Word -> Maybe Word
-    f byteArr x = g x 0
-      where
-        g :: Word -> Int -> Maybe Word
-        g !j !i
-          | toEnum i * bitsInWord >= w = Nothing
-          | j < ones  = Just $ wordSelect value j
-          | otherwise = (bitsInWord +) <$> g (j - ones) (i+1)
-          where
-            ones = toEnum $ popCount value
-            value :: Word
-            value = byteArr `indexByteArray` i
+    :: BitVector
+    -> Word        -- ^ \(k\), the select index
+    -> Maybe Word  -- ^ index of the k-th set bit
+select (BV 0 _     ) _ = Nothing -- There can be no set bits in a bit-vector of length 0
+select (BV w natVal) k = case natVal of
+    NatS# v       -> let !u = W# v in if toEnum (popCount u) <= k then Nothing else Just $ wordSelect u k
+    NatJ# (BN# v) -> f (ByteArray v) k
+    where
+        f :: ByteArray -> Word -> Maybe Word
+        f byteArr x = g x 0
+            where
+                g :: Word -> Int -> Maybe Word
+                g !j !i
+                    | toEnum i * bitsInWord >= w = Nothing
+                    | j < ones  = Just $ wordSelect value j
+                    | otherwise = (bitsInWord +) <$> g (j - ones) (i + 1)
+                    where
+                        ones = toEnum $ popCount value
+                        value :: Word
+                        value = byteArr `indexByteArray` i
 
 
 -- |
@@ -713,50 +717,47 @@ bitsInWord = toEnum $ finiteBitSize (undefined :: Word)
 -- Clever use of 'popCount' and masking to get the number of set bits up to,
 -- /but not including/,  index "k."
 wordRank
-  :: Word -- ^ Input 'Word'
-  -> Word -- ^ Index k, upt to which we count all set bits, k in range [ 0, finiteBitCount - 1 ]
-  -> Word -- ^ THe number of bits set within index "k."
-wordRank v x = toEnum . popCount $ suffixOnes .&. v
-  where
-    suffixOnes = (1 `shiftL` fromEnum x) - 1
+    :: Word -- ^ Input 'Word'
+    -> Word -- ^ Index k, upt to which we count all set bits, k in range [ 0, finiteBitCount - 1 ]
+    -> Word -- ^ THe number of bits set within index "k."
+wordRank v x = toEnum . popCount $ suffixOnes .&. v where suffixOnes = (1 `shiftL` fromEnum x) - 1
 
 
 -- |
 -- Perform binary search with 'popCount' to locate the k-th set bit
 wordSelect
-  :: Word -- ^ Input 'Word'
-  -> Word -- ^ Find the k-th set bit, k in range [ 0, finiteBitCount - 1 ]
-  -> Word -- ^ The index of the k-th set bit
+    :: Word -- ^ Input 'Word'
+    -> Word -- ^ Find the k-th set bit, k in range [ 0, finiteBitCount - 1 ]
+    -> Word -- ^ The index of the k-th set bit
 wordSelect v = go 0 63
-  where
-    go :: Word -> Word -> Word -> Word
-    go  lb ub x
-      | lb + 1 == ub = if x == 0 && v `testBit` fromEnum lb then lb else ub
-      | otherwise =
-          let !lowOnes =  toEnum . popCount $ lowMask .&. v
-          in  if lowOnes > x
-              then go lb mb x
-              else go (mb + 1) ub (x - lowOnes)
-      where
-        mb = ((ub - lb) `div` 2) + lb
-        lowMask = makeMask lb mb
+    where
+        go :: Word -> Word -> Word -> Word
+        go lb ub x
+            | lb + 1 == ub
+            = if x == 0 && v `testBit` fromEnum lb then lb else ub
+            | otherwise
+            = let !lowOnes = toEnum . popCount $ lowMask .&. v
+              in  if lowOnes > x then go lb mb x else go (mb + 1) ub (x - lowOnes)
+            where
+                mb      = ((ub - lb) `div` 2) + lb
+                lowMask = makeMask lb mb
 
-        makeMask i j = wideMask `xor` thinMask
-          where
-            thinMask = (1 `shiftL` fromEnum i) - 1
-            wideMask
-              | j == bitsInWord - 1 = maxBound :: Word
-              | otherwise = (1 `shiftL` (fromEnum j + 1)) - 1
+                makeMask :: Enum a => a -> Word -> Word
+                makeMask i j = wideMask `xor` thinMask
+                    where
+                        thinMask = (1 `shiftL` fromEnum i) - 1
+                        wideMask
+                            | j == bitsInWord - 1 = maxBound :: Word
+                            | otherwise           = (1 `shiftL` (fromEnum j + 1)) - 1
 
 
 -- |
 -- Convert a 'Word' to an 'Int', but only if the 'Word' value is small enough.
 toInt :: Word -> Maybe Int
 toInt w
-  | w > maxInt = Nothing
-  | otherwise  = Just $ fromEnum w
-  where
-    maxInt = toEnum (maxBound :: Int)
+    | w > maxInt = Nothing
+    | otherwise  = Just $ fromEnum w
+    where maxInt = toEnum (maxBound :: Int)
 
 
 -- |
@@ -766,7 +767,4 @@ toInt w
 {-# INLINE intToNat #-}
 -- {-# NOINLINE intToNat #-}
 intToNat :: Integer -> Natural
-intToNat (S#  i#) | isTrue# (i# >=# 0#)               = NatS# (int2Word# i#)
-intToNat (Jp# bn) | isTrue# (sizeofBigNat# bn ==# 1#) = NatS# (bigNatToWord bn)
-                  | otherwise                         = NatJ# bn
-intToNat _                                            = NatS# (int2Word# 0#)
+intToNat = naturalFromInteger

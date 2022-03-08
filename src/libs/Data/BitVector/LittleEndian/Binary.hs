@@ -12,6 +12,7 @@
 --
 -----------------------------------------------------------------------------
 
+{-# LANGUAGE Safe #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Data.BitVector.LittleEndian.Binary () where

@@ -14,6 +14,8 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
+{-# Language Safe #-}
+
 module Data.BitVector.LittleEndian.QuickCheck () where
 
 import Data.Bits
@@ -66,9 +68,9 @@ instance Arbitrary BitVector where
             let upperBound = shiftL 1 dimVal
             -- 1/5 chance all bits on or all bits off
             natVal <- case spec of
-                        Just False -> pure $ intToNat 0
-                        Just True  -> pure . intToNat $ upperBound - 1
-                        Nothing    -> fmap intToNat $
+                        Just False -> pure $ naturalFromInteger 0
+                        Just True  -> pure . naturalFromInteger $ upperBound - 1
+                        Nothing    -> fmap naturalFromInteger $
                                         (getNonNegative <$> arbitrary) `suchThat` (< upperBound)
             pure $ BV (toEnum dimVal) natVal
 

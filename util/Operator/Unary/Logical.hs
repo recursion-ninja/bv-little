@@ -1,8 +1,11 @@
-{-# LANGUAGE DeriveAnyClass        #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE DeriveGeneric         #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DeriveAnyClass             #-}
+{-# LANGUAGE DeriveDataTypeable         #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE Safe                       #-}
 
 module Operator.Unary.Logical
   ( UnaryLogicalOperator()
@@ -24,7 +27,8 @@ data  UnaryLogicalOperator
     | Identity
     | Negation
     | AlwaysTrue
-    deriving (Data, Eq, Ord, Generic, NFData, Typeable)
+    deriving anyclass (NFData)
+    deriving stock    (Data, Eq, Ord, Generic)
 
 
 instance Arbitrary UnaryLogicalOperator where

@@ -43,32 +43,32 @@ instance MonoFoldable BitVector where
     ofoldMap f (BV w n) = go m
       where
         !m = fromEnum w
-        go  0 = mempty
-        go !c = let !i = m - c
-                    !j = c - 1
-                    !b = n `testBit` i
-                in  f b `mappend` go j
+        go 0 = mempty
+        go c = let !i = m - c
+                   !j = c - 1
+                   !b = n `testBit` i
+               in  f b `mappend` go j
                       
     {-# INLINE ofoldr #-}
     ofoldr f e (BV w n) =
       let !m = fromEnum w
-          go  0 acc = acc
-          go !c acc = let !i = m - c
-                          !j = c - 1
-                          !b = n `testBit` i
-                      in  f b $ go j acc
+          go 0 acc = acc
+          go c acc = let !i = m - c
+                         !j = c - 1
+                         !b = n `testBit` i
+                     in  f b $ go j acc
       in  go m e
 
     {-# INLINE ofoldl' #-}
     ofoldl' f e (BV w n) = go m e
       where
         !m = fromEnum w
-        go  0 acc = acc
-        go !c acc = let !i = m - c
-                        !j = c - 1
-                        !b = n `testBit` i
-                        !a = f acc b
-                    in  go j a
+        go 0 acc = acc
+        go c acc = let !i = m - c
+                       !j = c - 1
+                       !b = n `testBit` i
+                       !a = f acc b
+                   in  go j a
 
     {-# INLINE otoList #-}
     otoList = toBits
@@ -109,18 +109,18 @@ instance MonoFoldable BitVector where
     otraverse_ f (BV w n) = go (fromEnum w) 
       where
         go 0 = pure ()
-        go !c = let !j = c - 1
-                    !a = f (n `testBit` j)
-                in  a *> go j
+        go c = let !j = c - 1
+                   !a = f (n `testBit` j)
+               in  a *> go j
 
 
     {-# INLINE ofoldlM #-}
     ofoldlM f e (BV w n) = go (fromEnum w) e
       where
-        go  0 acc = pure acc
-        go !c acc = let !j = c - 1
-                        !x = f acc (n `testBit` j)
-                    in  x >>= go j
+        go 0 acc = pure acc
+        go c acc = let !j = c - 1
+                       !x = f acc (n `testBit` j)
+                   in  x >>= go j
         
     {-# INLINE ofoldMap1Ex #-}
     ofoldMap1Ex _ (BV 0 _) = Prelude.error "Data.MonoTraversable.ofoldMap1Ex on an empty BitVector!"

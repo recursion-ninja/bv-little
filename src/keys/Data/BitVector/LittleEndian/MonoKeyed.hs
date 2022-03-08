@@ -74,44 +74,44 @@ instance MonoFoldableWithKey BitVector where
     -- | /O(n)/
     {-# INLINE otoKeyedList #-}
     otoKeyedList (BV w n) = 
-      let go  0 = []
-          go !c = let !k = w - c
-                      !v = n `testBit` fromEnum k
-                      !i = c - 1
-                  in  (k, v) : go i
+      let go 0 = []
+          go c = let !k = w - c
+                     !v = n `testBit` fromEnum k
+                     !i = c - 1
+                 in  (k, v) : go i
       in  go w
 
     -- | /O(n)/
     {-# INLINE ofoldMapWithKey #-}
     ofoldMapWithKey f (BV w n) =
-      let go  0 = mempty
-          go !c = let !k = w - c
-                      !v = n `testBit` fromEnum k
-                      !i = c - 1
-                      !m = f k v
-                  in  m `mappend` go i
+      let go 0 = mempty
+          go c = let !k = w - c
+                     !v = n `testBit` fromEnum k
+                     !i = c - 1
+                     !m = f k v
+                 in  m `mappend` go i
       in  go w
 
     -- | /O(n)/
     {-# INLINE ofoldrWithKey #-}
     ofoldrWithKey f e (BV w n) =
-      let go  0 acc = acc
-          go !c acc = let !k = w - c
-                          !i = c - 1
-                          !b = n `testBit` fromEnum k
-                      in  f k b $ go i acc
+      let go 0 acc = acc
+          go c acc = let !k = w - c
+                         !i = c - 1
+                         !b = n `testBit` fromEnum k
+                     in  f k b $ go i acc
       in  go w e
 
     -- | /O(n)/
     {-# INLINE ofoldlWithKey #-}
     ofoldlWithKey f e (BV w n) = go w e
       where
-        go  0 acc = acc
-        go !c acc = let !k = w - c
-                        !i = c - 1
-                        !b = n `testBit` fromEnum k
-                        !a = f acc k b
-                    in  go i a
+        go 0 acc = acc
+        go c acc = let !k = w - c
+                       !i = c - 1
+                       !b = n `testBit` fromEnum k
+                       !a = f acc k b
+                   in  go i a
 
 
 -- |
@@ -138,14 +138,14 @@ instance MonoKeyed BitVector where
     -- | /O(n)/
     {-# INLINE omapWithKey #-}
     omapWithKey f (BV w n) =
-      let go  0 acc = acc
-          go !c acc = let !k = w - c
-                          !i = fromEnum k
-                          !j = c - 1
-                          !b = n `testBit` i
-                          !a | f k b     = acc `setBit` i
-                             | otherwise = acc
-                      in  go j a
+      let go 0 acc = acc
+          go c acc = let !k = w - c
+                         !i = fromEnum k
+                         !j = c - 1
+                         !b = n `testBit` i
+                         !a | f k b     = acc `setBit` i
+                            | otherwise = acc
+                     in  go j a
       in  go w $ BV w 0
 
 

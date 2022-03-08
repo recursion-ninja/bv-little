@@ -1,16 +1,16 @@
-{-# LANGUAGE BangPatterns          #-}
-{-# LANGUAGE DeriveAnyClass        #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE DeriveGeneric         #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DeriveAnyClass             #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE Safe                       #-}
 
 module Operator.Binary.Comparison
   ( ComparisonOperator(getComparator)
   ) where
 
 import Control.DeepSeq
-import Data.Data
 import Data.List                     (elemIndex)
 import Data.Maybe                    (fromJust)
 import Data.Monoid                   ()
@@ -20,7 +20,8 @@ import Test.SmallCheck.Series
 
 
 newtype ComparisonOperator = CO { getComparator :: Bool -> Bool -> Ordering }
-    deriving (Generic, NFData, Typeable)
+    deriving anyclass (NFData)
+    deriving stock    (Generic)
 
 
 comparatorList :: [ComparisonOperator]

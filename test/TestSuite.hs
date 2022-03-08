@@ -1,4 +1,5 @@
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 
 -- We apply this to suppress the deprecated warning cause by calls to 'bitSize'
 -- If there is a more fine-grained way to supress this warning without suppressing
@@ -7,31 +8,31 @@
 
 module Main ( main ) where
 
-import           Control.DeepSeq
-import           Data.Bits
-import           Data.BitVector.LittleEndian
-import           Data.BitVector.LittleEndian.Instances ()
-import           Data.BitVector.Visual
-import           Data.Foldable
-import           Data.Functor.Compose
-import           Data.Functor.Identity
-import           Data.Hashable
-import           Data.List.NonEmpty (NonEmpty(..))
-import           Data.Maybe
-import           Data.Monoid ()
-import           Data.MonoTraversable
-import           Data.MonoTraversable.Keys
-import           Data.Semigroup
-import           Operator.Binary.Comparison
-import           Operator.Binary.Logical
-import           Operator.Unary.Logical
-import           Test.Tasty
-import           Test.Tasty.HUnit
-import           Test.Tasty.QuickCheck hiding ((.&.), forAll, testProperty)
-import qualified Test.Tasty.QuickCheck as QC
-import           Test.Tasty.SmallCheck hiding ((===), (==>), Property, testProperty)
-import qualified Test.Tasty.SmallCheck as SC
-import           TextShow (TextShow(showb), toString)
+import Control.DeepSeq
+import Data.Bits
+import Data.BitVector.LittleEndian
+import Data.BitVector.LittleEndian.Instances ()
+import Data.BitVector.Visual
+import Data.Foldable
+import Data.Functor.Compose
+import Data.Functor.Identity
+import Data.Hashable
+import Data.Maybe
+import Data.Monoid ()
+import Data.MonoTraversable
+import Data.MonoTraversable.Keys
+import Data.Semigroup
+import Operator.Binary.Comparison
+import Operator.Binary.Logical
+import Operator.Unary.Logical
+import GHC.Exts (IsList(..))
+import Test.Tasty
+import Test.Tasty.HUnit
+import Test.Tasty.QuickCheck hiding ((.&.), forAll, testProperty)
+import Test.Tasty.QuickCheck qualified as QC
+import Test.Tasty.SmallCheck hiding ((==>), Property, testProperty)
+import Test.Tasty.SmallCheck qualified as SC
+--import TextShow (TextShow(showb), toString)
 
 
 infix 0 -=>
@@ -62,7 +63,7 @@ testSuite = testGroup "BitVector tests"
     , orderingProperties
     , semigroupProperties
     , showProperties
-    , textshowProperties
+--    , textshowProperties
     , bitVectorProperties
     , bitVectorRankSelect
     , monoFunctorEquivelence
@@ -163,6 +164,7 @@ finiteBitsTests :: TestTree
 finiteBitsTests = testGroup "Properties of FiniteBits"
     [ QC.testProperty "bitSize === finiteBitSize" finiteBitSizeIsBitSize
     , QC.testProperty "bitSizeMaybe === Just . finiteBitSize" finiteBitSizeIsBitSizeMaybe
+    , QC.testProperty "dimension === finiteBitSize" finiteBitSizeIsDimension
     , QC.testProperty "countLeadingZeros <= finiteBitSize" finiteBitSizeIsGreaterThanLeadingZeros
     , QC.testProperty "countTrailingZeros <= finiteBitSize" finiteBitSizeIsGreaterThanTrailingZeros
     , QC.testProperty "length . toBits === finiteBitSize" finiteBitSizeIsBitLength
@@ -555,8 +557,7 @@ semigroupProperties = testGroup "Properties of a Semigroup"
         sconcat bvs === foldr1 mappend bvs
       where
         -- We do this because there is currently no Arbitrary inctance for NonEmpty
-        bvs = let x:xs = getNonEmpty nel
-              in  x:|xs
+        bvs = fromList $ getNonEmpty nel
 
     repeatedApplication :: NonNegative Int -> BitVector -> Property
     repeatedApplication (NonNegative i) bv =
@@ -577,6 +578,8 @@ showProperties = testGroup "Properties of Show"
     nonNullString =
         not . null . show
 
+
+{-
 textshowProperties :: TestTree
 textshowProperties = testGroup "Properties of TextShow"
     [ QC.testProperty "textshow and show result agree" textshowCoherence
@@ -585,7 +588,7 @@ textshowProperties = testGroup "Properties of TextShow"
     textshowCoherence :: BitVector -> Property
     textshowCoherence bv =
         (toString . showb $ bv) === show bv
-
+-}
 
 
 bitVectorProperties :: TestTree
@@ -601,7 +604,7 @@ bitVectorProperties = testGroup "BitVector properties"
     , QC.testProperty "toSignedNumber . fromNumber === id" bitVectorUnsignedNumIdentity
     , QC.testProperty "isSigned == const False" noSignBitVector
 -- For an unknown reason, this test case causes GHC to panic!
---    , QC.testProperty "i >  j -=> subRange (i,j) === const zeroBits" badSubRangeEmptyResult
+    , QC.testProperty "i >  j -=> subRange (i,j) === const zeroBits" badSubRangeEmptyResult
     , QC.testProperty "i <= j -=> dimension . subRange (i,j) === const (j - i + 1)" subRangeFixedDimension
     ]
   where
@@ -680,12 +683,12 @@ bitVectorRankSelect = testGroup "BitVector rank/select"
 
     rankBitValue :: NonNegative Word -> Property
     rankBitValue (NonNegative x) =
-        rank (bit (fromEnum x)) (x+1) === 1
+        rank (bit (fromEnum x)) (x + 1) === 1
 
     rankBitOr :: NonNegative Int -> NonNegative Int -> Property
     rankBitOr (NonNegative x) (NonNegative y) =
         x /= y -=>
-          rank (bit x .|. bit y) z' === rank (bit x) (x'+1) + rank (bit y) (y'+1)
+          rank (bit x .|. bit y) z' === rank (bit x) (x' + 1) + rank (bit y) (y' + 1)
       where
         x' = toEnum x
         y' = toEnum y
@@ -722,11 +725,11 @@ monoFoldableEquivelence = testGroup "Equivelence of a MonoFoldable"
     [ SC.testProperty "oall f === all f . otoList"              $ forAll oallOptimizationIsValid
     , SC.testProperty "oany f === any f . otoList"              $ forAll oanyOptimizationIsValid
     , SC.testProperty "ofoldr1Ex  f === foldr1 f . otoList"     $ forAll ofoldr1ExOptimizationIsValid
-    , SC.testProperty "ofold'1Ex' f === foldl1 f . otoList"     $ forAll ofoldl1ExOptimizationIsValid
+    , SC.testProperty "ofoldl1Ex' f === foldl1 f . otoList"     $ forAll ofoldl1ExOptimizationIsValid
     , SC.testProperty "headEx === head . otoList"               $ forAll headExOptimizationIsValid
     , SC.testProperty "lastEx === last . otoList"               $ forAll lastExOptimizationIsValid
---    , SC.testProperty "maximumByEx f === maximumBy f . otoList" $ forAll maximumByExOptimizationIsValid
---    , SC.testProperty "minimumByEx f === minimumBy f . otoList" $ forAll minimumByExOptimizationIsValid
+    , SC.testProperty "maximumByEx f === maximumBy f . otoList" $ forAll maximumByExOptimizationIsValid
+    , SC.testProperty "minimumByEx f === minimumBy f . otoList" $ forAll minimumByExOptimizationIsValid
     , SC.testProperty "oelem e === oelem e . otoList"           $ forAll oelemOptimizationIsValid
     , SC.testProperty "onotElem e === onotElem e . otoList"     $ forAll onotElemOptimizationIsValid
     ]

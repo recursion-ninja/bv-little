@@ -1,0 +1,152 @@
+---------------------------------------------------------------------------------
+-- Build decisions
+--  * Static or dynamic binaries
+--  * Compiler versions
+---------------------------------------------------------------------------------
+
+executable-static: False
+with-compiler: ghc-9.2.2
+
+
+---------------------------------------------------------------------------------
+-- Output paths
+--
+-- Place build output(s) in more accessible locations. Binaries should go in `bin`
+-- and log files of the build/benchmarls/tests should go in `log`.
+---------------------------------------------------------------------------------
+
+logs-dir:         ./log
+installdir:       ./bin
+install-method:   copy
+overwrite-policy: always
+--docdir:           ./doc
+--htmldir:          ./doc/html
+
+
+---------------------------------------------------------------------------------
+-- Build metadata flags
+--
+-- Sensible alterations from the defaults to improve the build experiance during
+-- iterative development. Simultaneously, does not hinder release builds.
+---------------------------------------------------------------------------------
+
+haddock-html:             True
+haddock-tests:            True
+haddock-benchmarks:       True
+haddock-internal:         True
+haddock-hyperlink-source: True
+jobs:                     $ncpus
+keep-going:               True
+minimize-conflict-set:    True
+
+
+---------------------------------------------------------------------------------
+-- Package flags (useful defaults)
+--
+-- Instruct all transative dependencies to be built *with both* optimization and
+-- profiling enabled. This reduces rebuilds when debugging while not sacraficing
+-- undue execution speed from imported code.
+--
+-- Contrastingly, *disable both* optimization and profiling when building the
+-- current package's codebase. This improves the frequent recompilation speed
+-- during iterative development.
+--
+-- Finally, enable all warnings and then prune out the undesireable ones. Having
+-- the large litany of warnings enabled forces pre-emptive compatability with
+-- future breaking changes as well as improving overall code quality.
+---------------------------------------------------------------------------------
+
+-- Applies to *all* packages, not just dependencies...
+package *
+    benchmarks:        False
+    documentation:     True
+    tests:             False
+    library-profiling: True
+    library-profiling-detail: all-functions
+    optimization: 2
+
+-- Applies to *only* the specified package!
+package bv-little
+    benchmarks:        True
+    documentation:     True
+    tests:             True
+    library-profiling: False
+    optimization: 0
+    ghc-options:
+        -- Interface files for post-compilation static analysis
+        -fwrite-ide-info
+        -hiedir=.hie
+        -- Sanity check warnings:
+        --   1. Fail on a warning
+        --   2. Include all warnings by default
+        --   3. Exclude the undesirable warnings
+        -Werror
+        -Weverything
+        -- Exclusions:
+        -Wno-implicit-prelude
+        -Wno-missing-import-lists
+        -Wno-missing-kind-signatures
+        -Wno-missing-safe-haskell-mode
+        -Wno-monomorphism-restriction
+        -Wno-type-defaults
+        -Wno-unsafe
+
+packages: .
+
+
+---------------------------------------------------------------------------------
+-- Dependency specifications
+--
+-- Always allow a newer version of libraries which are tightly coupled to the GHC
+-- compiler version. This allows the project to build with newer versions of the
+-- compiler without having to tediously tinker with dependencies, both direct and
+-- transitive.
+--
+-- Furthermore, always allow a newer version of libraries which have had a major
+-- release due to a security or performance patch. Add a preference for using a
+-- version greater than or equal to the patch.
+---------------------------------------------------------------------------------
+
+allow-newer:
+    -- Core library
+    base,
+    ghc,
+    ghc-compact,
+    ghc-prim,
+    integer-gmp,
+    template-haskell,
+    -- Internal compiler library
+    ghc-boot,
+    ghc-boot-th,
+    ghc-heap,
+    libiserv,
+    -- Dependency of `ghc` library
+    array,
+    binary,
+    bytestring,
+    containers,
+    deepseq,
+    directory,
+    exceptions,
+    filepath,
+    pretty,
+    process,
+    time,
+    transformers,
+    unix,
+    Win32,
+    -- Core tool library
+    ghci,
+    hpc,
+    Cabal,
+    -- Dependency of `Cabal` library
+    mtl,
+    parsec,
+    text,
+     -- Security update
+    aeson,
+
+preferences:
+    aeson          >= 2.0.0,
+    bytestring     >= 0.11.3,
+    text           >= 2.0.0,

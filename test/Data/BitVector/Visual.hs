@@ -1,8 +1,10 @@
-{-# LANGUAGE DeriveAnyClass        #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE DeriveGeneric         #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE DeriveAnyClass             #-}
+{-# LANGUAGE DeriveDataTypeable         #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 
 module Data.BitVector.Visual
   ( VisualBitVector()
@@ -14,13 +16,13 @@ import Control.DeepSeq
 import Data.Bits
 import Data.BitVector.LittleEndian
 import Data.Data
-import Data.Functor.Compose
-import Data.Functor.Identity
-import Data.Hashable
-import Data.List.NonEmpty (NonEmpty(..))
+--import Data.Functor.Compose
+--import Data.Functor.Identity
+--import Data.Hashable
+--import Data.List.NonEmpty (NonEmpty(..))
 import Data.Monoid ()
-import Data.MonoTraversable
-import Data.Semigroup
+--import Data.MonoTraversable
+--import Data.Semigroup
 import GHC.Generics
 import GHC.Natural
 import Test.QuickCheck        hiding (generate)
@@ -28,11 +30,13 @@ import Test.SmallCheck.Series
 
 
 newtype VisualBitVector = VBV BitVector
-    deriving (Data, Eq, Ord, Generic, NFData, Typeable)
+    deriving newtype (Eq, Ord, NFData)
+    deriving stock   (Data, Generic)
 
 
 newtype VisualBitVectorSmall = VBVS BitVector
-    deriving (Data, Eq, Ord, Generic, NFData, Typeable)
+    deriving newtype (Eq, Ord, NFData)
+    deriving stock   (Data, Generic)
 
 
 class HasBitVector a where
@@ -90,14 +94,15 @@ instance Enum VisualBitVector where
 
     toEnum n = go $ n `mod` (bit 9 - 1)
       where
+        go :: (Integral v, FiniteBits v) => v -> VisualBitVector
         go i = VBV $ fromNumber (toEnum dim) num
           where
-            (num, off, dim) = getEnumContext i
+            (num, _, dim) = getEnumContext i
 
     fromEnum (VBV bv) =
         case dim of
           0 -> 0
-          n -> num + 2^dim - 1
+          n -> num + 2 ^ n - 1
       where
         num = toUnsignedNumber bv
         dim = dimension bv
@@ -107,14 +112,15 @@ instance Enum VisualBitVectorSmall where
 
     toEnum n = go $ n `mod` (bit 4 - 1)
       where
+        go :: (Integral v, FiniteBits v) => v -> VisualBitVectorSmall
         go i = VBVS $ fromNumber (toEnum dim) num
           where
-            (num, off, dim) = getEnumContext i
+            (num, _, dim) = getEnumContext i
 
     fromEnum (VBVS bv) =
         case dim of
           0 -> 0
-          n -> num + 2^dim - 1
+          n -> num + 2 ^ n - 1
       where
         num = toUnsignedNumber bv
         dim = dimension bv
@@ -157,10 +163,12 @@ instance Show VisualBitVectorSmall where
       ]
 
 
+getEnumContext :: (FiniteBits b, Num b) => b -> (b, b, Int)
 getEnumContext i = (num, off, dim)
   where
     num = i - off
     off = bit dim - 1
     dim = logBase2 $ i + 1
+    logBase2 :: FiniteBits b => b -> Int
     logBase2 x = finiteBitSize x - 1 - countLeadingZeros x
 

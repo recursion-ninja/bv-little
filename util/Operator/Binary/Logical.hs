@@ -1,8 +1,11 @@
-{-# LANGUAGE DeriveAnyClass        #-}
-{-# LANGUAGE DeriveDataTypeable    #-}
-{-# LANGUAGE DeriveGeneric         #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DeriveAnyClass             #-}
+{-# LANGUAGE DeriveDataTypeable         #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE Safe                       #-}
 
 module Operator.Binary.Logical
   ( BinaryLogicalOperator()
@@ -36,7 +39,8 @@ data  BinaryLogicalOperator
     | ConverseImplication
     | LogicalOR
     | AlwaysTrue
-    deriving (Data, Eq, Ord, Generic, NFData, Typeable)
+    deriving anyclass (NFData)
+    deriving stock    (Data, Eq, Ord, Generic)
 
 
 instance Arbitrary BinaryLogicalOperator where

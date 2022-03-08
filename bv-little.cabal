@@ -34,54 +34,9 @@ source-repository head
   location: https://github.com/recursion-ninja/bv-little
 
 
-common ghc-flags
-
-  ghc-options:
-    -- Optimization flags
-    -O2
-    -fexcess-precision
-    -fexpose-all-unfoldings
-    -flate-specialise
-    -foptimal-applicative-do
-    -fspecialize-aggressively
-    -fstatic-argument-transformation
-    -- Sanity check warnings
-    -Wall
-    -Wcompat
-    -Wdodgy-foreign-imports
-    -Wduplicate-exports
-    -Wempty-enumerations
-    -Widentities
-    -Wincomplete-patterns
-    -Wincomplete-record-updates
-    -Wincomplete-uni-patterns
-    -Wmissing-deriving-strategies
-    -Wmissing-fields
-    -Wmissing-home-modules
-    -Wmissing-monadfail-instances
-    -Wmissing-signatures
-    -Wnoncanonical-monad-instances
-    -Wnoncanonical-monoid-instances
-    -Woverflowed-literals
-    -Woverlapping-patterns
-    -Wredundant-constraints
-    -Wsemigroup
-    -Wtabs
-    -Wunrecognised-warning-flags
-    -Wunused-binds
-    -Wunused-do-bind
-    -Wunused-foralls
-    -Wunused-imports
-    -Wunused-matches
-    -Wwrong-do-bind
-
-
 library
 
-  import: ghc-flags
-
   build-depends:      base                  >= 4.13  && < 5
-                    , hashable              >= 1.3
                     , core
 
   default-language: Haskell2010
@@ -92,8 +47,6 @@ library
 
 
 library core
-
-  import: ghc-flags
 
   visibility: private
         
@@ -130,8 +83,6 @@ library instances
 
 
 library instances-binary
-
-  import: ghc-flags
         
   visibility: public
         
@@ -147,8 +98,6 @@ library instances-binary
 
 
 library instances-mono-traversable-keys
-
-  import: ghc-flags
 
   visibility: public
         
@@ -168,8 +117,6 @@ library instances-mono-traversable-keys
 
 library instances-mono-traversable
 
-  import: ghc-flags
-
   visibility: public
         
   build-depends:      base                  >= 4.13  && < 5
@@ -185,8 +132,6 @@ library instances-mono-traversable
 
 library instances-quickcheck
 
-  import: ghc-flags
-
   visibility: public
         
   build-depends:      base                  >= 4.13  && < 5
@@ -201,8 +146,6 @@ library instances-quickcheck
 
 
 --library instances-text-show
---
---  import: ghc-flags
 --
 --  visibility: public
 --        
@@ -236,7 +179,7 @@ Test-Suite test-suite
                     , tasty-hunit
                     , tasty-quickcheck
                     , tasty-smallcheck
-                    , text-show             >= 3.8
+--                    , text-show             >= 3.8
 
   if !impl(ghc >= 8.0)
 
@@ -283,7 +226,7 @@ benchmark benchmark-suite
                     -fspec-constr-count=6
 
                     -- Sanity check warnings
-                    -Wall
+                --    -Wall
                     -fwarn-dodgy-foreign-imports
                     -fwarn-incomplete-record-updates
                     -fwarn-incomplete-uni-patterns
@@ -333,7 +276,7 @@ benchmark benchmark-heap-stack
 --                    -prof
 
                     -- Sanity check warnings
-                    -Wall
+                --    -Wall
                     -fwarn-dodgy-foreign-imports
                     -fwarn-incomplete-record-updates
                     -fwarn-incomplete-uni-patterns
