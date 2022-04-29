@@ -1,16 +1,23 @@
-cabal-version:       3.0
-name:                bv-little
-version:             1.2.0
-synopsis:            Efficient little-endian bit vector library
-category:            Data, Bit Vectors
-license:             BSD-3-Clause
-license-file:        LICENSE
-author:              Alex Washburn
-maintainer:          hackage@recursion.ninja
-homepage:            https://github.com/recursion-ninja/bv-little
-bug-reports:         https://github.com/recursion-ninja/bv-little/issues
-copyright:           (c) Alex Washburn 2020
-description:
+Cabal-Version:      3.6
+Name:               bv-little
+Version:            1.2.0
+Stability:          Stable
+Build-Type:         Simple
+Tested-With:
+  GHC == 9.2.2
+
+Author:             Alex Washburn
+Copyright:          (c) Alex Washburn 2020
+License:            BSD-3-Clause
+License-File:       LICENSE
+
+Maintainer:         hackage@recursion.ninja
+Homepage:           https://github.com/recursion-ninja/bv-little
+Bug-Reports:        https://github.com/recursion-ninja/bv-little/issues
+
+Synopsis:           Efficient little-endian bit vector library
+Category:           Data, Bit Vectors
+Description:
   .
   This package contains a time- and space- efficient implementation of /little-endian, immutable/ bit vectors. Provides implementations of applicable typeclasses and numeric conversions.
   .
@@ -20,132 +27,168 @@ description:
   .
   For an implementation of /little-endian, mutable/ bit vectors, use the <https://hackage.haskell.org/package/bitvec bitvec> package.          
 
-build-type:          Simple
+Extra-Source-Files:
+  changelog.md
+  README.md
+  stack.yaml
 
-tested-with:         GHC == 8.10.3
-                     GHC == 8.8.4
-
-extra-source-files:  changelog.md
-                     README.md
-                     stack.yaml
-
-source-repository head
+Source-Repository head
   type:     git
   location: https://github.com/recursion-ninja/bv-little
 
+Common language
 
-library
-
-  build-depends:      base                  >= 4.13  && < 5
-                    , core
-
-  default-language: Haskell2010
-
-  exposed-modules:  Data.BitVector.LittleEndian
-
-  hs-source-dirs:   src
+  default-extensions:
+    NoGeneralizedNewtypeDeriving
+    
+  default-language:
+    GHC2021
 
 
-library core
+Library
 
-  visibility: private
-        
-  build-depends:      base                  >= 4.13  && < 5
-                    , deepseq               >= 1.4.1.1
-                    , hashable              >= 1.3
-                    , integer-gmp           >= 1.0
-                    , primitive             >= 0.7
+  import:
+    language
 
-  default-language: Haskell2010
+  build-depends:
+    , base >=4.13 && <5
+    , core
 
-  exposed-modules:  Data.BitVector.LittleEndian.Internal
+  exposed-modules:
+    Data.BitVector.LittleEndian
 
-  hs-source-dirs:   src/core
-
-
-library instances
-
-  import: ghc-flags
-        
-  visibility: public
-        
-  build-depends:      instances-binary
-                    , instances-mono-traversable-keys
-                    , instances-mono-traversable
-                    , instances-quickcheck
---                    , instances-text-show
-
-  default-language: Haskell2010
-
-  exposed-modules:  Data.BitVector.LittleEndian.Instances
-
-  hs-source-dirs:   src/full
+  hs-source-dirs:
+    src
 
 
-library instances-binary
-        
-  visibility: public
-        
-  build-depends:      binary                >= 0.8
-                    , base                  >= 4.13  && < 5
-                    , core
+Library core
 
-  default-language: Haskell2010
+  import:
+    language
 
-  exposed-modules:  Data.BitVector.LittleEndian.Binary
+  build-depends:
+    , base         >=4.13    && <5
+    , deepseq      >=1.4.1.1
+    , hashable     >=1.3
+    , integer-gmp  >=1.0
+    , primitive    >=0.7
 
-  hs-source-dirs:   src/libs
+  exposed-modules:
+    Data.BitVector.LittleEndian.Internal
 
+  hs-source-dirs:
+    src/core
 
-library instances-mono-traversable-keys
-
-  visibility: public
-        
-  build-depends:      base                  >= 4.13  && < 5
-                    , core
-                    , instances-mono-traversable
-                    , keys                  >= 3.12
-                    , mono-traversable      >= 1.0
-                    , mono-traversable-keys >= 0.1.0
-
-  default-language: Haskell2010
-
-  exposed-modules:  Data.BitVector.LittleEndian.MonoKeyed
-
-  hs-source-dirs:   src/keys
+  visibility:
+    private
 
 
-library instances-mono-traversable
+Library instances
 
-  visibility: public
-        
-  build-depends:      base                  >= 4.13  && < 5
-                    , core
-                    , mono-traversable      >= 1.0
+  import:
+    language
 
-  default-language: Haskell2010
+  build-depends:
+    , bv-little:instances-binary
+    , bv-little:instances-mono-traversable
+    , bv-little:instances-mono-traversable-keys
+    , bv-little:instances-quickcheck
+--  ,  bv-little:instances-text-show
 
-  exposed-modules:  Data.BitVector.LittleEndian.MonoTraversable
+  exposed-modules:
+    Data.BitVector.LittleEndian.Instances
 
-  hs-source-dirs:   src/libs
+  hs-source-dirs:
+    src/full
 
-
-library instances-quickcheck
-
-  visibility: public
-        
-  build-depends:      base                  >= 4.13  && < 5
-                    , core
-                    , QuickCheck            >= 2.13
-
-  default-language: Haskell2010
-
-  exposed-modules:  Data.BitVector.LittleEndian.QuickCheck
-
-  hs-source-dirs:   src/libs
+  visibility:
+    public
 
 
---library instances-text-show
+Library instances-binary
+
+  import:
+    language
+
+  build-depends:
+    , base    >=4.13 && <5
+    , binary  >=0.8
+    , core
+
+  exposed-modules:
+    Data.BitVector.LittleEndian.Binary
+
+  hs-source-dirs:
+    src/libs
+
+  visibility:
+    public
+
+
+Library instances-mono-traversable
+
+  import:
+    language
+
+  build-depends:
+    , base              >=4.13 && <5
+    , core
+    , mono-traversable  >=1.0
+
+  exposed-modules:
+    Data.BitVector.LittleEndian.MonoTraversable
+
+  hs-source-dirs:
+    src/libs
+
+  visibility:
+    public
+
+
+Library instances-mono-traversable-keys
+
+  import:
+    language
+
+  build-depends:
+    , base                        >=4.13  && <5
+    , core
+    , bv-little:instances-mono-traversable
+    , keys                        >=3.12
+    , mono-traversable            >=1.0
+    , mono-traversable-keys       >=0.1.0
+
+  exposed-modules:
+    Data.BitVector.LittleEndian.MonoKeyed
+
+  hs-source-dirs:
+    src/keys
+
+  visibility:
+    public
+
+
+Library instances-quickcheck
+
+  import:
+    language
+
+  build-depends:
+    , base        >=4.13 && <5
+    , core
+    , QuickCheck  >=2.13
+
+  exposed-modules:
+    Data.BitVector.LittleEndian.QuickCheck
+
+  hs-source-dirs:
+    src/libs
+
+  visibility:
+    public
+
+
+--Library instances-text-show
 --
 --  visibility: public
 --        
@@ -153,140 +196,145 @@ library instances-quickcheck
 --                    , core
 --                    , text-show             >= 3.8
 --
---  default-language: Haskell2010
+--  default-language: GHC2021
 --
---  exposed-modules:  Data.BitVector.LittleEndian.TextShow
+--  exposed-modules:
+--    Data.BitVector.LittleEndian.TextShow
 --
---  hs-source-dirs:   src/libs
+--  hs-source-dirs:
+--    src/libs
 
 
-Test-Suite test-suite
+Test-Suite Test-Suite
+  import:         language
+  type:           exitcode-stdio-1.0
+  main-is:        TestSuite.hs
+  build-depends:
+    , base                   >=4.13    && <5
+    , bv-little
+    , bv-little:instances
+    , deepseq                >=1.4.1.1
+    , hashable               >=1.2.3.2
+    , mono-traversable       >=1.0.5.0
+    , mono-traversable-keys  >=0.1.0
+    , QuickCheck             >=2.13
+    , smallcheck             >=1.1.5
+    , tasty
+    , tasty-hunit
+    , tasty-quickcheck
+    , tasty-smallcheck
+--    , text-show             >= 3.8
 
-  type:             exitcode-stdio-1.0
+  if !impl(ghc >=8.0)
+    build-depends:
+      , semigroups    >=0.18 && <1.0
+      , transformers
 
-  main-is:          TestSuite.hs
-
-  build-depends:      base                  >= 4.13  && < 5
-                    , bv-little
-                    , instances
-                    , deepseq               >= 1.4.1.1
-                    , hashable              >= 1.2.3.2
-                    , mono-traversable      >= 1.0.5.0
-                    , mono-traversable-keys >= 0.1.0
-                    , QuickCheck            >= 2.13
-                    , smallcheck            >= 1.1.5
-                    , tasty
-                    , tasty-hunit
-                    , tasty-quickcheck
-                    , tasty-smallcheck
---                    , text-show             >= 3.8
-
-  if !impl(ghc >= 8.0)
-
-    build-depends:    semigroups       >= 0.18  && < 1.0
-                    , transformers
-
-  default-language: Haskell2010
-
-  hs-source-dirs:   test, util
-
-  other-modules:    Data.BitVector.Visual
-                    Operator.Binary.Comparison
-                    Operator.Binary.Logical
-                    Operator.Unary.Logical
-                    
-
-benchmark benchmark-suite
-
-  type:             exitcode-stdio-1.0
-
-  main-is:          Benchmarks.hs
-
-  build-depends:      base             >= 4.5.1 && < 5
-                    , bv-little
-                    , instances
-                    , criterion
-                    , deepseq          >= 1.4.1.1
-                    , hashable         >= 1.2.3.2
-                    , mono-traversable >= 1.0.5.0
-                    , QuickCheck       >= 2.8
-                    , smallcheck       >= 1.1.5
-
-  if !impl(ghc >= 8.0)
-
-    build-depends:    semigroups       >= 0.18  && < 1.0
-
-  default-language: Haskell2010
-
-  ghc-options:      -O2
-                    -threaded
-                    -fdicts-cheap
-                    -fmax-simplifier-iterations=10
-                    -fno-full-laziness
-                    -fspec-constr-count=6
-
-                    -- Sanity check warnings
-                --    -Wall
-                    -fwarn-dodgy-foreign-imports
-                    -fwarn-incomplete-record-updates
-                    -fwarn-incomplete-uni-patterns
-                    -fwarn-overlapping-patterns
-
-                    -- Turn off type default warnings
-                    -fno-warn-type-defaults
-
-  hs-source-dirs:   bench, util
-
-  other-modules:    Operator.Binary.Comparison
-                    Operator.Binary.Logical
-                    Operator.Unary.Logical
-                    
+  hs-source-dirs:
+    test,
+    util
+    
+  other-modules:
+    Data.BitVector.Visual
+    Operator.Binary.Comparison
+    Operator.Binary.Logical
+    Operator.Unary.Logical
 
 
-benchmark benchmark-heap-stack
+Benchmark Benchmark-suite
 
-  type:             exitcode-stdio-1.0
+  import:
+    language
 
-  main-is:          HeapStack.hs
+  type:
+    exitcode-stdio-1.0
 
-  build-depends:      base             >= 4.5.1 && < 5
-                    , bv-little
-                    , instances
-                    , criterion
-                    , deepseq          >= 1.4.1.1
-                    , hashable         >= 1.2.3.2
-                    , mono-traversable >= 1.0.5.0
-                    , QuickCheck       >= 2.8
-                    , smallcheck       >= 1.1.5
+  main-is:
+    Benchmarks.hs
 
-  if !impl(ghc >= 8.0)
+  build-depends:
+    , base              >=4.5.1   && <5
+    , bv-little
+    , bv-little:instances
+    , criterion
+    , deepseq           >=1.4.1.1
+    , hashable          >=1.2.3.2
+    , mono-traversable  >=1.0.5.0
+    , QuickCheck        >=2.8
+    , smallcheck        >=1.1.5
 
-    build-depends:    semigroups       >= 0.18  && < 1.0
+  if !impl(ghc >=8.0)
+    build-depends:
+      semigroups >=0.18 && <1.0
 
-  default-language: Haskell2010
+  ghc-options:
+    -O2
+    -threaded
+    -fdicts-cheap
+    -fmax-simplifier-iterations=10
+    -fno-full-laziness
+    -fspec-constr-count=6
+    -fwarn-dodgy-foreign-imports
+    -fwarn-incomplete-record-updates
+    -fwarn-incomplete-uni-patterns
+    -fwarn-overlapping-patterns
+    -fno-warn-type-defaults
 
-  ghc-options:      -O2
---                    -ddump-simpl-stats
-                    -threaded
-                    -fdicts-cheap
-                    -fmax-simplifier-iterations=10
-                    -fno-full-laziness
-                    -fspec-constr-count=6
-                    -rtsopts
---                    -prof
+  hs-source-dirs:
+    bench,
+    util
 
-                    -- Sanity check warnings
-                --    -Wall
-                    -fwarn-dodgy-foreign-imports
-                    -fwarn-incomplete-record-updates
-                    -fwarn-incomplete-uni-patterns
-                    -fwarn-overlapping-patterns
+  other-modules:
+    Operator.Binary.Comparison
+    Operator.Binary.Logical
+    Operator.Unary.Logical
 
-                    -- Turn off type default warnings
-                    -fno-warn-type-defaults
 
-  hs-source-dirs:   bench, util
+Benchmark Benchmark-heap-stack
 
-  other-modules:    Operator.Binary.Comparison
-                    Operator.Binary.Logical
-                    Operator.Unary.Logical
+  import:
+    language
+
+  type:
+    exitcode-stdio-1.0
+
+  main-is: 
+    HeapStack.hs
+
+  build-depends:
+    , base              >=4.5.1   && <5
+    , bv-little
+    , bv-little:instances
+    , criterion
+    , deepseq           >=1.4.1.1
+    , hashable          >=1.2.3.2
+    , mono-traversable  >=1.0.5.0
+    , QuickCheck        >=2.8
+    , smallcheck        >=1.1.5
+
+  if !impl(ghc >=8.0)
+    build-depends:
+      semigroups >=0.18 && <1.0
+
+  ghc-options:
+    -O2
+    -threaded
+    -fdicts-cheap
+    -fmax-simplifier-iterations=10
+    -fno-full-laziness
+    -fspec-constr-count=6
+    -rtsopts
+    -fwarn-dodgy-foreign-imports
+    -fwarn-incomplete-record-updates
+    -fwarn-incomplete-uni-patterns
+    -fwarn-overlapping-patterns
+    -fno-warn-type-defaults
+
+  hs-source-dirs:
+     bench,
+     util
+
+  other-modules:
+    Operator.Binary.Comparison
+    Operator.Binary.Logical
+    Operator.Unary.Logical
