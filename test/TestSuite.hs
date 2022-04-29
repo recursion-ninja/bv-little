@@ -427,7 +427,7 @@ monoTraversableWithKeyProperties = testGroup
 monoZipProperties :: TestTree
 monoZipProperties = testGroup
     "Properites of a MonoZip"
-    [ QC.testProperty "ozipWith const u u === ozipWith (flip const) u u === u" ozipWithConst
+    [ QC.testProperty "ozipWith const u u === ozipWith (const id) u u === u" ozipWithConst
     , QC.testProperty "ozipWith (flip f) x y === ozipWith f y x" ozipWithTransposition
     , QC.testProperty
         "ozipWith (\\a b -> f (g a) (h b)) x y === ozipWith f (omap g x) (omap h y)"
@@ -435,7 +435,7 @@ monoZipProperties = testGroup
     ]
     where
         ozipWithConst :: BitVector -> Property
-        ozipWithConst u = ozipWith const u u === u .&&. ozipWith (flip const) u u === u
+        ozipWithConst u = ozipWith const u u === u .&&. ozipWith (const id) u u === u
 
         ozipWithTransposition :: Blind (Bool -> Bool -> Bool) -> BitVector -> BitVector -> Property
         ozipWithTransposition (Blind f) x y = ozipWith (flip f) x y === ozipWith f y x

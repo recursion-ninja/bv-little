@@ -208,7 +208,7 @@ instance Bits BitVector where
 instance Eq BitVector where
 
     {-# INLINE (==) #-}
-    (==) (BV w1 m) (BV w2 n) = w1 == w2 && (naturalToBigNat m) `compare` (naturalToBigNat n) == EQ
+    (==) (BV w1 m) (BV w2 n) = w1 == w2 && naturalToBigNat m == naturalToBigNat n
         where
             naturalToBigNat (NatS# w ) = wordToBigNat w
             naturalToBigNat (NatJ# bn) = bn
@@ -331,7 +331,7 @@ instance Semigroup BitVector where
 -- @since 0.1.0
 instance Show BitVector where
 
-    show (BV w n) = mconcat ["[", show w, "]", show n]
+    show (BV w n) = fold ["[", show w, "]", show n]
 
 
 -- |

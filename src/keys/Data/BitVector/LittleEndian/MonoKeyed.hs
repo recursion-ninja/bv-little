@@ -34,6 +34,7 @@ module Data.BitVector.LittleEndian.MonoKeyed
 import Data.BitVector.LittleEndian.Internal
 import Data.BitVector.LittleEndian.MonoTraversable ()
 import Data.Bits
+import Data.Foldable (fold)
 import Data.Key
 import Data.Maybe (fromMaybe)
 import Data.MonoTraversable ()
@@ -129,7 +130,7 @@ instance MonoIndexable BitVector where
     {-# INLINE oindex #-}
     oindex bv@(BV w _) i = fromMaybe errorMessage $ i `olookup` bv
         where
-            errorMessage = error $ mconcat
+            errorMessage = error $ fold
                 [ "Data.BitVector.LittleEndian.oindex: "
                 , "The index "
                 , show i

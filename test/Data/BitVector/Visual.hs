@@ -1,4 +1,3 @@
-{-# Language DeriveAnyClass #-}
 {-# Language DeriveDataTypeable #-}
 {-# Language DeriveGeneric #-}
 {-# Language DerivingStrategies #-}
@@ -16,13 +15,8 @@ import Control.DeepSeq
 import Data.BitVector.LittleEndian
 import Data.Bits
 import Data.Data
---import Data.Functor.Compose
---import Data.Functor.Identity
---import Data.Hashable
---import Data.List.NonEmpty (NonEmpty(..))
+import Data.Foldable (fold)
 import Data.Monoid ()
---import Data.MonoTraversable
---import Data.Semigroup
 import GHC.Generics
 import GHC.Natural
 import Test.QuickCheck hiding (generate)
@@ -137,13 +131,13 @@ instance Monad m => Serial m VisualBitVectorSmall where
 instance Show VisualBitVector where
 
     show (VBV bv) =
-        mconcat ["[", show $ dimension bv, "]", "<", foldMap (\b -> if b then "1" else "0") $ toBits bv, ">"]
+        fold ["[", show $ dimension bv, "]", "<", foldMap (\b -> if b then "1" else "0") $ toBits bv, ">"]
 
 
 instance Show VisualBitVectorSmall where
 
     show (VBVS bv) =
-        mconcat ["[", show $ dimension bv, "]", "<", foldMap (\b -> if b then "1" else "0") $ toBits bv, ">"]
+        fold ["[", show $ dimension bv, "]", "<", foldMap (\b -> if b then "1" else "0") $ toBits bv, ">"]
 
 
 getEnumContext :: (FiniteBits b, Num b) => b -> (b, b, Int)
