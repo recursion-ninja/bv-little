@@ -1,6 +1,9 @@
 ### Unreleased Changes
 
-  * None
+  * Added specializations
+
+  * Dropping support for GHC < 9.2.1
+
 
 ### [v1.2.0][7]
 
@@ -11,6 +14,7 @@
   * Added `Binary` instance
 
   * Added `Read` instance
+
 
 ### [v1.1.1][6]
 

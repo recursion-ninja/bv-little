@@ -65,6 +65,13 @@ package *
     library-profiling-detail: all-functions
     optimization: 2
 
+package statistics
+    ghc-options:
+        -fmax-simplifier-iterations=16
+        -fsimpl-tick-factor=512
+        -funfolding-case-scaling=4
+        -funfolding-case-threshold=4
+
 -- Applies to *only* the specified package!
 package bv-little
     benchmarks:        True

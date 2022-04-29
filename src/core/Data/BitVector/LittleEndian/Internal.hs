@@ -31,6 +31,7 @@
 
 {-# Language BangPatterns #-}
 {-# Language CPP #-}
+{-# Language DeriveAnyClass #-}
 {-# Language DeriveDataTypeable #-}
 {-# Language DeriveGeneric #-}
 {-# Language DerivingStrategies #-}
@@ -41,20 +42,17 @@
 {-# Language UnicodeSyntax #-}
 
 module Data.BitVector.LittleEndian.Internal
-    ( BitVector(..)
+    ( BitVector (..)
+    , dimension
     , fromBits
     , fromNumber
+    , isZeroVector
+    , rank
+    , select
+    , subRange
     , toBits
     , toSignedNumber
     , toUnsignedNumber
-    , dimension
-    , isZeroVector
-    , subRange
-    , rank
-    , select
---    , bitsInWord
---    , wordRank
---    , wordSelect
     ) where
 
 import Control.DeepSeq
@@ -63,11 +61,14 @@ import Data.Bits
 import Data.Data
 import Data.Foldable
 import Data.Hashable
+import Data.Int
 import Data.List.NonEmpty (NonEmpty(..))
 import Data.Monoid ()
 import Data.Ord
 import Data.Primitive.ByteArray
 import Data.Semigroup
+import Data.Word
+import Foreign.C.Types
 import GHC.Exts
 import GHC.Generics (Generic)
 import GHC.Integer.GMP.Internals
@@ -78,17 +79,25 @@ import Text.Read
 
 -- |
 -- A little-endian bit vector of non-negative dimension.
-data BitVector 
+data BitVector
     = BV
     { dim :: {-# UNPACK #-} !Word
       -- ^ The /dimension/ of a bit vector.
     , nat :: !Natural
       -- ^ The value of a bit vector, as a natural number.
     }
-    -- ^ @since 0.1.0
-    -- ^ @since 0.1.0
-    -- ^ @since 0.1.0
-    deriving stock (Data, Generic)
+
+
+-- ^ @since 0.1.0
+deriving stock instance Data BitVector
+
+
+-- ^ @since 0.1.0
+deriving stock instance Generic BitVector
+
+
+-- ^ @since 0.1.0
+deriving anyclass instance NFData BitVector
 
 
 -- |
@@ -268,16 +277,6 @@ instance Monoid BitVector where
 
 -- |
 -- @since 0.1.0
-instance NFData BitVector where
-
-    -- Already a strict data type,
-    -- always in normal form.
-    {-# INLINE rnf #-}
-    rnf = const ()
-
-
--- |
--- @since 0.1.0
 instance Ord BitVector where
 
     {-# INLINE compare #-}
@@ -351,7 +350,7 @@ instance Show BitVector where
 --
 -- >>> fromBits [True, False, False]
 -- [3]1
-{-# INLINE fromBits #-}
+{-# INLINABLE fromBits #-}
 fromBits :: Foldable f => f Bool -> BitVector
 fromBits bs = BV (toEnum n) k
   -- NB: 'setBit' is a GMP function, faster than regular addition.
@@ -379,7 +378,7 @@ fromBits bs = BV (toEnum n) k
 --
 -- >>> toBits [4]11
 -- [True, True, False, True]
-{-# INLINE toBits #-}
+{-# INLINABLE toBits #-}
 toBits :: BitVector -> [Bool]
 toBits (BV w n) = go (fromEnum w) []
     where
@@ -417,6 +416,36 @@ toBits (BV w n) = go (fromEnum w) []
 -- >>> fromNumber 6 96
 -- [6]32
 {-# INLINE [1] fromNumber #-}
+{-# SPECIALISE fromNumber :: Word -> CBool      -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CChar      -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CInt       -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CIntMax    -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CIntPtr    -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CLLong     -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CLong      -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CPtrdiff   -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CSChar     -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CShort     -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CSigAtomic -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CSize      -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CUChar     -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CUInt      -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CUIntMax   -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CUIntPtr   -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CULLong    -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CULong     -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CUShort    -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> CWchar     -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> Int        -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> Int8       -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> Int16      -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> Int32      -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> Int64      -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> Integer    -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> Word8      -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> Word16     -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> Word32     -> BitVector #-}
+{-# SPECIALISE fromNumber :: Word -> Word64     -> BitVector #-}
 fromNumber
     :: Integral v
     => Word  -- ^ dimension of bit vector
@@ -472,7 +501,7 @@ toSignedNumber (BV w n) = fromInteger v
         !i = toInteger n
         !v
             | n `testBit` (fromEnum w - 1) = negate $ shiftL 1 (fromEnum w) - i
-            | otherwise = i
+            | otherwise                    = i
 
 
 -- |
@@ -587,8 +616,7 @@ subRange (!lower, !upper) (BV _ n)
         Nothing -> zeroBits
         Just i ->
             let b = n `shiftR` i
-            in
-                case toInt upper of
+            in  case toInt upper of
                     Nothing -> let m = toEnum $ maxBound - i + 1 in BV m $ n `shiftR` i
                     Just j ->
                         let x = j - i
@@ -641,8 +669,7 @@ rank _        0 = 0 -- There can be no set bits /before/ the 0-th bit
 rank (BV 0 _) _ = 0 -- There can be no set bits in a bit-vector of length 0
 rank (BV w natVal) k =
     let j = min k w
-    in
-        case natVal of
+    in  case natVal of
             NatS# v       -> wordRank (W# v) j
             NatJ# (BN# v) -> f (ByteArray v) j
     where
@@ -696,8 +723,8 @@ select (BV w natVal) k = case natVal of
                 g :: Word -> Int -> Maybe Word
                 g !j !i
                     | toEnum i * bitsInWord >= w = Nothing
-                    | j < ones  = Just $ wordSelect value j
-                    | otherwise = (bitsInWord +) <$> g (j - ones) (i + 1)
+                    | j < ones                   = Just $ wordSelect value j
+                    | otherwise                  = (bitsInWord +) <$> g (j - ones) (i + 1)
                     where
                         ones = toEnum $ popCount value
                         value :: Word

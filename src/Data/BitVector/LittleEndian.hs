@@ -34,26 +34,24 @@
 -- future.
 -----------------------------------------------------------------------------
 
-{-# LANGUAGE Safe              #-}
+{-# Language Safe #-}
 
 module Data.BitVector.LittleEndian
-  ( BitVector()
-  -- * Bit-stream conversion
-  , fromBits
-  , toBits
-  -- * Numeric conversion
-  , fromNumber
-  , toSignedNumber
-  , toUnsignedNumber
-  -- * Queries
-  , dimension
-  , isZeroVector
-  , subRange
-  -- * Rank / Select
-  , rank
-  , select
-  ) where
+    ( BitVector ()
+      -- * Bit-stream conversion
+    , fromBits
+    , toBits
+      -- * Numeric conversion
+    , fromNumber
+    , toSignedNumber
+    , toUnsignedNumber
+      -- * Queries
+    , dimension
+    , isZeroVector
+    , subRange
+      -- * Rank / Select
+    , rank
+    , select
+    ) where
 
 import Data.BitVector.LittleEndian.Internal
--- import Data.Hashable () -- For Haddock
-

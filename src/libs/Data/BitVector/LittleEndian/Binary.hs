@@ -12,14 +12,16 @@
 --
 -----------------------------------------------------------------------------
 
-{-# LANGUAGE Safe #-}
+{-# Language Safe #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Data.BitVector.LittleEndian.Binary () where
+module Data.BitVector.LittleEndian.Binary
+    (
+    ) where
 
 import Control.Applicative
-import Data.BitVector.LittleEndian.Internal
 import Data.Binary
+import Data.BitVector.LittleEndian.Internal
 
 
 -- |

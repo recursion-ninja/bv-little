@@ -12,11 +12,14 @@
 --
 -----------------------------------------------------------------------------
 
-{-# LANGUAGE OverloadedStrings  #-}
+{-# Language OverloadedStrings #-}
+
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Data.BitVector.LittleEndian.TextShow () where
+module Data.BitVector.LittleEndian.TextShow
+    (
+    ) where
 
 import Data.BitVector.LittleEndian.Internal
 import TextShow (TextShow(showb))
@@ -26,4 +29,4 @@ import TextShow (TextShow(showb))
 -- @since 1.0.0
 instance TextShow BitVector where
 
-    showb (BV w n) = mconcat [ "[", showb w, "]", showb n ]
+    showb (BV w n) = mconcat ["[", showb w, "]", showb n]

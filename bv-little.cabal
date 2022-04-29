@@ -52,7 +52,7 @@ Library
 
   build-depends:
     , base >=4.13 && <5
-    , core
+    , bv-little:core
 
   exposed-modules:
     Data.BitVector.LittleEndian
@@ -113,7 +113,7 @@ Library instances-binary
   build-depends:
     , base    >=4.13 && <5
     , binary  >=0.8
-    , core
+    , bv-little:core
 
   exposed-modules:
     Data.BitVector.LittleEndian.Binary
@@ -132,7 +132,7 @@ Library instances-mono-traversable
 
   build-depends:
     , base              >=4.13 && <5
-    , core
+    , bv-little:core
     , mono-traversable  >=1.0
 
   exposed-modules:
@@ -152,7 +152,7 @@ Library instances-mono-traversable-keys
 
   build-depends:
     , base                        >=4.13  && <5
-    , core
+    , bv-little:core
     , bv-little:instances-mono-traversable
     , keys                        >=3.12
     , mono-traversable            >=1.0
@@ -175,7 +175,7 @@ Library instances-quickcheck
 
   build-depends:
     , base        >=4.13 && <5
-    , core
+    , bv-little:core
     , QuickCheck  >=2.13
 
   exposed-modules:
@@ -193,7 +193,7 @@ Library instances-quickcheck
 --  visibility: public
 --        
 --  build-depends:      base                  >= 4.13  && < 5
---                    , core
+--                    , bv-little:core
 --                    , text-show             >= 3.8
 --
 --  default-language: GHC2021
@@ -206,9 +206,16 @@ Library instances-quickcheck
 
 
 Test-Suite Test-Suite
-  import:         language
-  type:           exitcode-stdio-1.0
-  main-is:        TestSuite.hs
+
+  import:
+    language
+
+  type:
+    exitcode-stdio-1.0
+
+  main-is:
+    TestSuite.hs
+
   build-depends:
     , base                   >=4.13    && <5
     , bv-little
@@ -305,10 +312,10 @@ Benchmark Benchmark-heap-stack
     , base              >=4.5.1   && <5
     , bv-little
     , bv-little:instances
-    , criterion
+--    , criterion
     , deepseq           >=1.4.1.1
-    , hashable          >=1.2.3.2
-    , mono-traversable  >=1.0.5.0
+--    , hashable          >=1.2.3.2
+--    , mono-traversable  >=1.0.5.0
     , QuickCheck        >=2.8
     , smallcheck        >=1.1.5
 

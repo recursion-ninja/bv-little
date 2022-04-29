@@ -1,20 +1,20 @@
-{-# LANGUAGE DeriveAnyClass             #-}
-{-# LANGUAGE DeriveDataTypeable         #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE DerivingStrategies         #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# Language DeriveAnyClass #-}
+{-# Language DeriveDataTypeable #-}
+{-# Language DeriveGeneric #-}
+{-# Language DerivingStrategies #-}
+{-# Language FlexibleInstances #-}
+{-# Language GeneralizedNewtypeDeriving #-}
+{-# Language MultiParamTypeClasses #-}
 
 module Data.BitVector.Visual
-  ( VisualBitVector()
-  , VisualBitVectorSmall()
-  , HasBitVector(..)
-  )where
+    ( HasBitVector (..)
+    , VisualBitVector ()
+    , VisualBitVectorSmall ()
+    ) where
 
 import Control.DeepSeq
-import Data.Bits
 import Data.BitVector.LittleEndian
+import Data.Bits
 import Data.Data
 --import Data.Functor.Compose
 --import Data.Functor.Identity
@@ -25,18 +25,20 @@ import Data.Monoid ()
 --import Data.Semigroup
 import GHC.Generics
 import GHC.Natural
-import Test.QuickCheck        hiding (generate)
+import Test.QuickCheck hiding (generate)
 import Test.SmallCheck.Series
 
 
-newtype VisualBitVector = VBV BitVector
-    deriving newtype (Eq, Ord, NFData)
-    deriving stock   (Data, Generic)
+newtype VisualBitVector
+    = VBV BitVector
+    deriving newtype (Eq, NFData, Ord)
+    deriving stock (Data, Generic)
 
 
-newtype VisualBitVectorSmall = VBVS BitVector
-    deriving newtype (Eq, Ord, NFData)
-    deriving stock   (Data, Generic)
+newtype VisualBitVectorSmall
+    = VBVS BitVector
+    deriving newtype (Eq, NFData, Ord)
+    deriving stock (Data, Generic)
 
 
 class HasBitVector a where
@@ -93,82 +95,63 @@ instance Bounded VisualBitVectorSmall where
 instance Enum VisualBitVector where
 
     toEnum n = go $ n `mod` (bit 9 - 1)
-      where
-        go :: (Integral v, FiniteBits v) => v -> VisualBitVector
-        go i = VBV $ fromNumber (toEnum dim) num
-          where
-            (num, _, dim) = getEnumContext i
+        where
+            go :: (Integral v, FiniteBits v) => v -> VisualBitVector
+            go i = VBV $ fromNumber (toEnum dim) num where (num, _, dim) = getEnumContext i
 
-    fromEnum (VBV bv) =
-        case dim of
-          0 -> 0
-          n -> num + 2 ^ n - 1
-      where
-        num = toUnsignedNumber bv
-        dim = dimension bv
+    fromEnum (VBV bv) = case dim of
+        0 -> 0
+        n -> num + 2 ^ n - 1
+        where
+            num = toUnsignedNumber bv
+            dim = dimension bv
 
 
 instance Enum VisualBitVectorSmall where
 
     toEnum n = go $ n `mod` (bit 4 - 1)
-      where
-        go :: (Integral v, FiniteBits v) => v -> VisualBitVectorSmall
-        go i = VBVS $ fromNumber (toEnum dim) num
-          where
-            (num, _, dim) = getEnumContext i
+        where
+            go :: (Integral v, FiniteBits v) => v -> VisualBitVectorSmall
+            go i = VBVS $ fromNumber (toEnum dim) num where (num, _, dim) = getEnumContext i
 
-    fromEnum (VBVS bv) =
-        case dim of
-          0 -> 0
-          n -> num + 2 ^ n - 1
-      where
-        num = toUnsignedNumber bv
-        dim = dimension bv
+    fromEnum (VBVS bv) = case dim of
+        0 -> 0
+        n -> num + 2 ^ n - 1
+        where
+            num = toUnsignedNumber bv
+            dim = dimension bv
 
 
 instance Monad m => Serial m VisualBitVector where
 
     series = generate $ const allVBVs
-      where
-        allVBVs = toEnum <$> [0 .. fromEnum (maxBound :: VisualBitVector)]
+        where allVBVs = toEnum <$> [0 .. fromEnum (maxBound :: VisualBitVector)]
 
 
 instance Monad m => Serial m VisualBitVectorSmall where
 
     series = generate $ const allVBVs
-      where
-        allVBVs = toEnum <$> [0 .. fromEnum (maxBound :: VisualBitVectorSmall)]
+        where allVBVs = toEnum <$> [0 .. fromEnum (maxBound :: VisualBitVectorSmall)]
 
 
 instance Show VisualBitVector where
 
-    show (VBV bv) = mconcat
-      [ "["
-      , show $ dimension bv
-      , "]"
-      , "<"
-      , foldMap (\b -> if b then "1" else "0") $ toBits bv
-      , ">"
-      ]
+    show (VBV bv) =
+        mconcat ["[", show $ dimension bv, "]", "<", foldMap (\b -> if b then "1" else "0") $ toBits bv, ">"]
+
 
 instance Show VisualBitVectorSmall where
 
-    show (VBVS bv) = mconcat
-      [ "["
-      , show $ dimension bv
-      , "]"
-      , "<"
-      , foldMap (\b -> if b then "1" else "0") $ toBits bv
-      , ">"
-      ]
+    show (VBVS bv) =
+        mconcat ["[", show $ dimension bv, "]", "<", foldMap (\b -> if b then "1" else "0") $ toBits bv, ">"]
 
 
 getEnumContext :: (FiniteBits b, Num b) => b -> (b, b, Int)
 getEnumContext i = (num, off, dim)
-  where
-    num = i - off
-    off = bit dim - 1
-    dim = logBase2 $ i + 1
-    logBase2 :: FiniteBits b => b -> Int
-    logBase2 x = finiteBitSize x - 1 - countLeadingZeros x
+    where
+        num = i - off
+        off = bit dim - 1
+        dim = logBase2 $ i + 1
+        logBase2 :: FiniteBits b => b -> Int
+        logBase2 x = finiteBitSize x - 1 - countLeadingZeros x
 
