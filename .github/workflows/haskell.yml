@@ -37,7 +37,7 @@ jobs:
             os:    ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/cache@v2
         name: caching lower bounds check
         with:
@@ -49,7 +49,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.ghc }}-
 
-      - uses: actions/setup-haskell@v1
+      - uses: haskell/actions/setup@v2
         name: Setup Haskell
         with:
           ghc-version:   ${{ matrix.ghc   }}
@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/cache@v2
       name: Cache Stack Artifacts
       with:
@@ -111,9 +111,9 @@ jobs:
         os:    [ ubuntu-latest, macOS-latest ]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup Haskell
-        uses: actions/setup-haskell@v1
+        uses: haskell/actions/setup@v2
         with:
           ghc-version:   ${{ matrix.ghc   }}
           cabal-version: ${{ matrix.cabal }}
