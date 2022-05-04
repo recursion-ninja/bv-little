@@ -1,1 +1,11 @@
-resolver: lts-16.26
+compiler:
+    ghc-9.2.2
+
+extra-deps:
+    - base-compat-0.12.1
+    - base-compat-batteries-0.12.1
+
+resolver:
+    lts-19.5
+
+require-stack-version: ">= 2.7"

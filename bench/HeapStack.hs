@@ -1,3 +1,12 @@
+{-|
+
+Copyright   : © 2020 Alex Washburn
+License     : BSD-3-Clause
+Maintainer  : github@recursion.ninja
+Stability   : Stable
+
+-}
+
 {-# Language BangPatterns #-}
 
 module Main
@@ -14,6 +23,9 @@ import Data.List (nubBy)
 import Numeric.Natural
 
 
+{-|
+Complete /memory/ benchmarking suite for the 'BitVector' type.
+-}
 main :: IO ()
 main = sequenceA_ [traverse_ (evaluate . force) actions, traverse_ (evaluate . force) other]
 

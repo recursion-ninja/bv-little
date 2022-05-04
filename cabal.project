@@ -12,7 +12,7 @@ with-compiler: ghc-9.2.2
 -- Output paths
 --
 -- Place build output(s) in more accessible locations. Binaries should go in `bin`
--- and log files of the build/benchmarls/tests should go in `log`.
+-- and log files of the build/benchmarks/tests should go in `log`.
 ---------------------------------------------------------------------------------
 
 logs-dir:         ./log
@@ -43,8 +43,8 @@ minimize-conflict-set:    True
 ---------------------------------------------------------------------------------
 -- Package flags (useful defaults)
 --
--- Instruct all transative dependencies to be built *with both* optimization and
--- profiling enabled. This reduces rebuilds when debugging while not sacraficing
+-- Instruct all transitive dependencies to be built *with both* optimization and
+-- profiling enabled. This reduces rebuilds when debugging while not sacrificing
 -- undue execution speed from imported code.
 --
 -- Contrastingly, *disable both* optimization and profiling when building the
@@ -61,10 +61,11 @@ package *
     benchmarks:        False
     documentation:     True
     tests:             False
-    library-profiling: True
+    library-profiling: False
     library-profiling-detail: all-functions
     optimization: 2
 
+-- Applies to *only* the specified package!
 package statistics
     ghc-options:
         -fmax-simplifier-iterations=16
@@ -72,7 +73,6 @@ package statistics
         -funfolding-case-scaling=4
         -funfolding-case-threshold=4
 
--- Applies to *only* the specified package!
 package bv-little
     benchmarks:        True
     documentation:     True

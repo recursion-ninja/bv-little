@@ -1,21 +1,17 @@
------------------------------------------------------------------------------
--- |
--- Module      :  Data.BitVector.LittleEndian.Binary
--- Copyright   :  (c) Alex Washburn 2018
--- License     :  BSD-style
---
--- Maintainer  :  github@recursion.ninja
--- Stability   :  provisional
--- Portability :  portable
---
--- Exposes the 'Abitrary' and 'CoArbitrary' instances for 'BitVector'.
---
------------------------------------------------------------------------------
+{-|
 
+Copyright   : © 2020 Alex Washburn
+License     : BSD-3-Clause
+Maintainer  : github@recursion.ninja
+Stability   : Stable
 
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+Exposes the 'Abitrary' and 'CoArbitrary' instances for 'BitVector'.
+
+-}
 
 {-# Language Safe #-}
+
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Data.BitVector.LittleEndian.QuickCheck
     (
@@ -28,8 +24,7 @@ import GHC.Natural
 import Test.QuickCheck (Arbitrary(..), CoArbitrary(..), NonNegative(..), choose, suchThat, variant)
 
 
--- |
--- @since 0.1.0
+{-| @since 0.1.0 -}
 instance Arbitrary BitVector where
 
     -- Arbitrary instance distribution weighting:
@@ -55,14 +50,14 @@ instance Arbitrary BitVector where
             anyBitValue   = genBitVector Nothing
 
             boundaryValue = do
-                let wrdVal = maxBound :: Word
-                let dimVal = toEnum $ popCount wrdVal
-                let numVal = wordToNatural wrdVal
+                let numVal = maxBound :: Word
+                let dimVal = toEnum $ popCount numVal
+                let natVal = wordToNatural numVal
                 -- 50/50 change to generate above or below the constructor boundary
                 underBoundary <- arbitrary
                 let (lowerBound, naturalVal)
-                        | underBoundary = (dimVal, numVal)
-                        | otherwise     = (dimVal + 1, numVal + 1)
+                        | underBoundary = (dimVal, natVal)
+                        | otherwise     = (dimVal + 1, natVal + 1)
                 widthVal <- (getNonNegative <$> arbitrary) `suchThat` (>= lowerBound)
                 pure $ BV widthVal naturalVal
 
@@ -78,8 +73,7 @@ instance Arbitrary BitVector where
                 pure $ BV (toEnum dimVal) natVal
 
 
--- |
--- @since 0.1.0
+{-| @since 0.1.0 -}
 instance CoArbitrary BitVector where
 
     coarbitrary bv = variant (dimension bv)

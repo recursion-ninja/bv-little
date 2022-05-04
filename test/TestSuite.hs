@@ -1,10 +1,18 @@
+{-|
+
+Copyright   : © 2020 Alex Washburn
+License     : BSD-3-Clause
+Maintainer  : github@recursion.ninja
+Stability   : Stable
+
+-}
+
 {-# Language FlexibleInstances #-}
 {-# Language ImportQualifiedPost #-}
 
-
--- We apply this to suppress the deprecated warning cause by calls to 'bitSize'
--- If there is a more fine-grained way to supress this warning without suppressing
--- deprecated warnings for the whole module, we should do that instead.
+  -- We apply this to suppress the deprecated warning cause by calls to 'bitSize'
+  -- If there is a more fine-grained way to suppress this warning without suppressing
+  -- deprecated warnings for the whole module, that should be done instead.
 {-# OPTIONS_GHC -fno-warn-warnings-deprecations #-}
 
 module Main
@@ -43,6 +51,9 @@ infix 0 -=>
 (-=>) p q = not p .||. q
 
 
+{-|
+Complete test suite for the 'BitVector' type.
+-}
 main :: IO ()
 main = defaultMain testSuite
 
@@ -70,9 +81,9 @@ testSuite = testGroup
 --    , textshowProperties
     , bitVectorProperties
     , bitVectorRankSelect
-    , monoFunctorEquivelence
-    , monoFoldableEquivelence
-    , monoZipEquivelence
+    , monoFunctorEquivalence
+    , monoFoldableEquivalence
+    , monoZipEquivalence
     ]
 
 
@@ -214,7 +225,7 @@ hashableTests = testGroup
 
 monoAdjustableProperties :: TestTree
 monoAdjustableProperties = testGroup
-    "Properites of a MonoAdjustable"
+    "Properties of a MonoAdjustable"
     [ QC.testProperty "oadjust id k === id" oadjustId
     , QC.testProperty "oadjust (f . g) k === oadjust f k . oadjust g k" oadjustComposition
     , QC.testProperty "oadjust f k === omapWithKey (\\i -> if i == k then f else id)" omapConditionality
@@ -241,7 +252,7 @@ monoAdjustableProperties = testGroup
 
 monoFunctorProperties :: TestTree
 monoFunctorProperties = testGroup
-    "Properites of a MonoFunctor"
+    "Properties of a MonoFunctor"
     [ QC.testProperty "omap id === id" omapId
     , QC.testProperty "omap (f . g)  === omap f . omap g" omapComposition
     ]
@@ -354,7 +365,7 @@ monoFoldableWithKeyProperties = testGroup
 
 monoKeyedProperties :: TestTree
 monoKeyedProperties = testGroup
-    "Properites of a MonoKeyed"
+    "Properties of a MonoKeyed"
     [ QC.testProperty "omapWithKey (const id) === id" omapId
     , QC.testProperty "omapWithKey (\\k -> f k . g k)  === omapWithKey f . omapWithKey g" omapComposition
     ]
@@ -426,8 +437,8 @@ monoTraversableWithKeyProperties = testGroup
 
 monoZipProperties :: TestTree
 monoZipProperties = testGroup
-    "Properites of a MonoZip"
-    [ QC.testProperty "ozipWith const u u === ozipWith (flip const) u u === u" ozipWithConst
+    "Properties of a MonoZip"
+    [ QC.testProperty "ozipWith const u u === ozipWith (const id) u u === u" ozipWithConst
     , QC.testProperty "ozipWith (flip f) x y === ozipWith f y x" ozipWithTransposition
     , QC.testProperty
         "ozipWith (\\a b -> f (g a) (h b)) x y === ozipWith f (omap g x) (omap h y)"
@@ -435,7 +446,7 @@ monoZipProperties = testGroup
     ]
     where
         ozipWithConst :: BitVector -> Property
-        ozipWithConst u = ozipWith const u u === u .&&. ozipWith (flip const) u u === u
+        ozipWithConst u = ozipWith const u u === u .&&. ozipWith (const id) u u === u
 
         ozipWithTransposition :: Blind (Bool -> Bool -> Bool) -> BitVector -> BitVector -> Property
         ozipWithTransposition (Blind f) x y = ozipWith (flip f) x y === ozipWith f y x
@@ -453,19 +464,22 @@ monoZipProperties = testGroup
 
 monoZipWithKeyProperties :: TestTree
 monoZipWithKeyProperties = testGroup
-    "Properites of a MonoZipWithKey"
+    "Properties of a MonoZipWithKey"
     [QC.testProperty "ozipWithKey (const f) === ozipWith f" ozipWithKeyConst]
     where
         ozipWithKeyConst :: Blind (Bool -> Bool -> Bool) -> BitVector -> BitVector -> Property
         ozipWithKeyConst (Blind f) x y = ozipWithKey (const f) x y === ozipWith f x y
 
 
+{- HLINT ignore monoidProperties "Monoid law, left identity" -}
+{- HLINT ignore monoidProperties "Monoid law, right identity" -}
+{- HLINT ignore monoidProperties "Use fold" -}
 monoidProperties :: TestTree
 monoidProperties = testGroup
     "Properties of a Monoid"
     [ QC.testProperty "left identity" leftIdentity
     , QC.testProperty "right identity" rightIdentity
-    , QC.testProperty "mempty is associative" operationAssocativity
+    , QC.testProperty "mempty is associative" operationAssociativity
     , QC.testProperty "mconcat === foldr (<>) mempty" foldableApplication
     ]
     where
@@ -475,8 +489,8 @@ monoidProperties = testGroup
         rightIdentity :: BitVector -> Property
         rightIdentity a = a `mappend` mempty === a
 
-        operationAssocativity :: BitVector -> BitVector -> BitVector -> Property
-        operationAssocativity a b c = a `mappend` (b `mappend` c) === (a `mappend` b) `mappend` c
+        operationAssociativity :: BitVector -> BitVector -> BitVector -> Property
+        operationAssociativity a b c = a `mappend` (b `mappend` c) === (a `mappend` b) `mappend` c
 
         foldableApplication :: [BitVector] -> Property
         foldableApplication bvs = mconcat bvs === foldr mappend mempty bvs
@@ -494,12 +508,12 @@ normalFormDataProperties = testGroup
 orderingProperties :: TestTree
 orderingProperties = testGroup
     "Properties of an Ordering"
-    [ QC.testProperty "ordering preserves symetry" symetry
+    [ QC.testProperty "ordering preserves symmetry" symmetry
     , QC.testProperty "ordering is transitive (total)" transitivity
     ]
     where
-        symetry :: BitVector -> BitVector -> Bool
-        symetry lhs rhs = case (lhs `compare` rhs, rhs `compare` lhs) of
+        symmetry :: BitVector -> BitVector -> Bool
+        symmetry lhs rhs = case (lhs `compare` rhs, rhs `compare` lhs) of
             (EQ, EQ) -> True
             (GT, LT) -> True
             (LT, GT) -> True
@@ -515,19 +529,19 @@ orderingProperties = testGroup
 semigroupProperties :: TestTree
 semigroupProperties = testGroup
     "Properties of a Semigroup"
-    [ localOption (QuickCheckTests 10000) $ QC.testProperty "(<>) is associative" operationAssocativity
+    [ localOption (QuickCheckTests 10000) $ QC.testProperty "(<>) is associative" operationAssociativity
     , QC.testProperty "sconcat === foldr1 (<>)" foldableApplication
     , QC.testProperty "stimes n === mconcat . replicate n" repeatedApplication
     ]
     where
-        operationAssocativity :: BitVector -> BitVector -> BitVector -> Property
-        operationAssocativity a b c = a <> (b <> c) === (a <> b) <> c
+        operationAssociativity :: BitVector -> BitVector -> BitVector -> Property
+        operationAssociativity a b c = a <> (b <> c) === (a <> b) <> c
 
         foldableApplication :: NonEmptyList BitVector -> Property
-        foldableApplication nel = sconcat bvs === foldr1 mappend bvs
+        foldableApplication manyBVs = sconcat bvs === foldr1 mappend bvs
             where
-            -- We do this because there is currently no Arbitrary inctance for NonEmpty
-                  bvs = fromList $ getNonEmpty nel
+            -- We do this because there is currently no Arbitrary instance for NonEmpty
+                  bvs = fromList $ getNonEmpty manyBVs
 
         repeatedApplication :: NonNegative Int -> BitVector -> Property
         repeatedApplication (NonNegative i) bv = stimes i bv === (mconcat . replicate i) bv
@@ -666,9 +680,9 @@ bitVectorRankSelect = testGroup
             in  idx === Nothing .||. rank bv k === x
 
 
-monoFunctorEquivelence :: TestTree
-monoFunctorEquivelence = testGroup
-    "Equivelence of a MonoFunctor"
+monoFunctorEquivalence :: TestTree
+monoFunctorEquivalence = testGroup
+    "Equivalence of a MonoFunctor"
     [SC.testProperty "omap f === fromBits . map f . toBits" $ forAll omapOptimizationIsValid]
     where
         omapOptimizationIsValid :: (Bool -> Bool, VisualBitVector) -> Bool
@@ -676,9 +690,9 @@ monoFunctorEquivelence = testGroup
             where bv = getBitVector y
 
 
-monoFoldableEquivelence :: TestTree
-monoFoldableEquivelence = testGroup
-    "Equivelence of a MonoFoldable"
+monoFoldableEquivalence :: TestTree
+monoFoldableEquivalence = testGroup
+    "Equivalence of a MonoFoldable"
     [ SC.testProperty "oall f === all f . otoList" $ forAll oallOptimizationIsValid
     , SC.testProperty "oany f === any f . otoList" $ forAll oanyOptimizationIsValid
     , SC.testProperty "ofoldr1Ex  f === foldr1 f . otoList" $ forAll ofoldr1ExOptimizationIsValid
@@ -745,9 +759,9 @@ monoFoldableEquivelence = testGroup
             where bv = getBitVector x
 
 
-monoZipEquivelence :: TestTree
-monoZipEquivelence = testGroup
-    "Equivelence of a MonoZip"
+monoZipEquivalence :: TestTree
+monoZipEquivalence = testGroup
+    "Equivalence of a MonoZip"
     [ SC.testProperty "ozipWith f x === fromBits . zipWith f . (toBits x) . toBits"
         $ forAll omapOptimizationIsValid
     ]

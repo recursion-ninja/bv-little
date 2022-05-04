@@ -1,3 +1,12 @@
+{-|
+
+Copyright   : © 2020 Alex Washburn
+License     : BSD-3-Clause
+Maintainer  : github@recursion.ninja
+Stability   : Stable
+
+-}
+
 {-# Language DeriveAnyClass #-}
 {-# Language DeriveDataTypeable #-}
 {-# Language DeriveGeneric #-}
@@ -21,6 +30,10 @@ import Test.QuickCheck hiding (generate)
 import Test.SmallCheck.Series
 
 
+{-|
+Representation of all possible /binary/ operators of type @(Bool -> Bool -> Bool)@.
+Useful for both property and enumeration based testing.
+-}
 data BinaryLogicalOperator
     = AlwaysFalse
     | LogicalNOR
@@ -168,6 +181,32 @@ instance Show BinaryLogicalOperator where
                 AlwaysTrue             -> "True (Tautology)"
 
 
+{-|
+Convert from a closed, binary function over 'Bool' to a 'BinaryLogicalOperator'.
+-}
+fromBinaryLogicalFunction :: (Bool -> Bool -> Bool) -> BinaryLogicalOperator
+fromBinaryLogicalFunction f = case (f True True, f True False, f False True, f False False) of
+    (False, False, False, False) -> AlwaysFalse
+    (False, False, False, True ) -> LogicalNOR
+    (False, False, True , False) -> ConverseNonImplication
+    (False, False, True , True ) -> NotFirstArgument
+    (False, True , False, False) -> NonImplication
+    (False, True , False, True ) -> NotSecondArgument
+    (False, True , True , False) -> LogicalXOR
+    (False, True , True , True ) -> LogicalNAND
+    (True , False, False, False) -> LogicalAND
+    (True , False, False, True ) -> LogicalXNOR
+    (True , False, True , False) -> SecondArgument
+    (True , False, True , True ) -> Implication
+    (True , True , False, False) -> FirstArgument
+    (True , True , False, True ) -> ConverseImplication
+    (True , True , True , False) -> LogicalOR
+    (True , True , True , True ) -> AlwaysTrue
+
+
+{-|
+Convert from a 'BinaryLogicalOperator' to a closed, binary function over 'Bool'.
+-}
 getBinaryLogicalOperator :: BinaryLogicalOperator -> Bool -> Bool -> Bool
 getBinaryLogicalOperator x = case x of
     AlwaysFalse            -> const (const False)
@@ -188,6 +227,9 @@ getBinaryLogicalOperator x = case x of
     AlwaysTrue             -> const (const True)
 
 
+{-|
+Query the Haskell expression of a 'BinaryLogicalOperator' representation symbolically as a 'String'.
+-}
 getBinaryLogicalSymbol :: BinaryLogicalOperator -> String
 getBinaryLogicalSymbol x = case x of
     AlwaysFalse            -> "(const False)"
@@ -207,22 +249,3 @@ getBinaryLogicalSymbol x = case x of
     LogicalOR              -> "(||)"
     AlwaysTrue             -> "(const True)"
 
-
-fromBinaryLogicalFunction :: (Bool -> Bool -> Bool) -> BinaryLogicalOperator
-fromBinaryLogicalFunction f = case (f True True, f True False, f False True, f False False) of
-    (False, False, False, False) -> AlwaysFalse
-    (False, False, False, True ) -> LogicalNOR
-    (False, False, True , False) -> ConverseNonImplication
-    (False, False, True , True ) -> NotFirstArgument
-    (False, True , False, False) -> NonImplication
-    (False, True , False, True ) -> NotSecondArgument
-    (False, True , True , False) -> LogicalXOR
-    (False, True , True , True ) -> LogicalNAND
-    (True , False, False, False) -> LogicalAND
-    (True , False, False, True ) -> LogicalXNOR
-    (True , False, True , False) -> SecondArgument
-    (True , False, True , True ) -> Implication
-    (True , True , False, False) -> FirstArgument
-    (True , True , False, True ) -> ConverseImplication
-    (True , True , True , False) -> LogicalOR
-    (True , True , True , True ) -> AlwaysTrue

@@ -1,3 +1,12 @@
+{-|
+
+Copyright   : © 2020 Alex Washburn
+License     : BSD-3-Clause
+Maintainer  : github@recursion.ninja
+Stability   : Stable
+
+-}
+
 {-# Language BangPatterns #-}
 
 module Main
@@ -16,6 +25,9 @@ import Operator.Binary.Logical
 import Operator.Unary.Logical
 
 
+{-|
+Complete /runtime/ benchmarking suite for the 'BitVector' type.
+-}
 main :: IO ()
 main = defaultMain [benchmarks]
 
@@ -28,7 +40,7 @@ benchmarks = bgroup
     , fromNumberBench
     , toSignedNumberBench
     , toUnsignedNumberBench
-    , dimmensionBench
+    , dimensionBench
     , isZeroVectorBench
     , zeroPopCountBench
     , subRangeBench
@@ -111,8 +123,8 @@ toUnsignedNumberBench :: Benchmark
 toUnsignedNumberBench = unaryBenchmark "toUnsignedNumber" (toUnsignedNumber :: BitVector -> Integer)
 
 
-dimmensionBench :: Benchmark
-dimmensionBench = constantNumberTimeBenchmark "dimmension" id g
+dimensionBench :: Benchmark
+dimensionBench = constantNumberTimeBenchmark "dimension" id g
     where
         g :: Integer -> a -> Word
         g int _ =

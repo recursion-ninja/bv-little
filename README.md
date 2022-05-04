@@ -12,31 +12,29 @@
 [![Stackage Nightly](http://stackage.org/package/bv-little/badge/nightly?style=flat&color=green)](http://stackage.org/nightly/package/bv-little)
 
 
-This package contains an efficient implementation of *little-endian, immutable* bit vectors. It implements most applicable typeclasses and also conversions to and from signed or unsigned numbers.
+This package contains an efficient implementation of *little-endian, immutable* bit vectors. It implements most applicable type-classes and also conversions to and from signed or unsigned numbers.
 
 For an implementation of *big-endian, immutable* bit vectors, use the [`bv`](https://hackage.haskell.org/package/bv) package.
 
 For an implementation of *little-endian, mutable* bit vectors, use the [`bitvec`](https://hackage.haskell.org/package/bitvec) package.
 
+
 #### Tests
 
-The test suite ensures that all typeclass instances are "lawful" and that data-structure–specific functionality is well defined.
+The test suite ensures that all type-class instances are "lawful" and that data-structure–specific functionality is well defined.
 
 The `TestSuite.hs` file contains the specification. It can be run by invoking any of the following commands:
-
-  * `cabal new-test`
 
   * `cabal test`
 
   * `stack test`
 
+
 #### Benchmarks
 
 The benchmarks provide an empyrical check for the asymptotic complexity of data structure operations and also provide easy metrics for detecting performance regressions.
 
-The `Benchmaks.hs` file contains these metrics. It can be run by invoking any of the following commands:
-
-  * `cabal new-bench`
+The `Benchmarks.hs` file contains these metrics. It can be run by invoking any of the following commands:
 
   * `cabal bench`
 

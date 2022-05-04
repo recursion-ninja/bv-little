@@ -1,29 +1,25 @@
------------------------------------------------------------------------------
--- |
--- Module      :  Data.BitVector.LittleEndian.Binary
--- Copyright   :  (c) Alex Washburn 2020
--- License     :  BSD-style
---
--- Maintainer  :  github@recursion.ninja
--- Stability   :  provisional
--- Portability :  portable
---
--- Exposes the following instances for 'BitVector':
---
---  * 'MonoAdjustable'
---  * 'MonoFoldableWithKey'
---  * 'MonoIndexable'
---  * 'MonoKeyed'
---  * 'MonoLookup'
---  * 'MonoTraversableWithKey'
---  * 'MonoZip'
---  * 'MonoZipWithKey'
---
------------------------------------------------------------------------------
+{-|
+
+Copyright   : © 2020 Alex Washburn
+License     : BSD-3-Clause
+Maintainer  : github@recursion.ninja
+Stability   : Stable
+
+Exposes the following instances for 'BitVector':
+
+  * 'MonoAdjustable'
+  * 'MonoFoldableWithKey'
+  * 'MonoIndexable'
+  * 'MonoKeyed'
+  * 'MonoLookup'
+  * 'MonoTraversableWithKey'
+  * 'MonoZip'
+  * 'MonoZipWithKey'
+
+-}
 
 {-# Language BangPatterns #-}
 {-# Language TypeFamilies #-}
-
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -34,20 +30,19 @@ module Data.BitVector.LittleEndian.MonoKeyed
 import Data.BitVector.LittleEndian.Internal
 import Data.BitVector.LittleEndian.MonoTraversable ()
 import Data.Bits
+import Data.Foldable (fold)
 import Data.Key
 import Data.Maybe (fromMaybe)
 import Data.MonoTraversable ()
 import Data.MonoTraversable.Keys
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 type instance MonoKey BitVector
     = Word
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoAdjustable BitVector where
 
     -- | /O(1)/
@@ -70,8 +65,7 @@ instance MonoAdjustable BitVector where
         where !i = fromEnum k
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoFoldableWithKey BitVector where
 
     -- | /O(n)/
@@ -121,15 +115,14 @@ instance MonoFoldableWithKey BitVector where
                 in  go i a
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoIndexable BitVector where
 
     -- | /O(1)/
     {-# INLINE oindex #-}
     oindex bv@(BV w _) i = fromMaybe errorMessage $ i `olookup` bv
         where
-            errorMessage = error $ mconcat
+            errorMessage = error $ fold
                 [ "Data.BitVector.LittleEndian.oindex: "
                 , "The index "
                 , show i
@@ -138,8 +131,7 @@ instance MonoIndexable BitVector where
                 ]
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoKeyed BitVector where
 
     -- | /O(n)/
@@ -158,8 +150,7 @@ instance MonoKeyed BitVector where
         in  go w $ BV w 0
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoLookup BitVector where
 
     -- | /O(1)/
@@ -169,8 +160,7 @@ instance MonoLookup BitVector where
         | otherwise = Just $ n `testBit` fromEnum k
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoTraversableWithKey BitVector where
 
     -- | /O(n)/
@@ -178,8 +168,7 @@ instance MonoTraversableWithKey BitVector where
     otraverseWithKey f = fmap fromBits . traverseWithKey (f . toEnum) . toBits
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoZip BitVector where
 
     -- | /O(1)/
@@ -228,8 +217,7 @@ instance MonoZip BitVector where
     -- cases of f p q
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoZipWithKey BitVector where
 
     {-# INLINE ozipWithKey #-}

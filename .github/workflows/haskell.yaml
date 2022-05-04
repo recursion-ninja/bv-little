@@ -1,0 +1,276 @@
+################################################################################
+### GitHub Actions curation providing quality assurance for Haskell projects 
+###
+name: 'Haskell Quality Assurance CI'
+
+################################################################################
+### Actions Configuration
+###
+defaults:
+  run:
+    shell: bash
+
+env:
+  CONFIG: --enable-tests --enable-benchmarks
+  THISPACKAGE: bv-little
+
+on:
+
+  # Build every pull request, to check for regressions.
+  pull_request:
+
+  # Build when a PR is merged, to update the README's CI badge.
+  push:
+#    branches: [master]
+
+  # Build once a month, to detect missing upper bounds.
+  schedule:
+    - cron: '0 0 1 * *'
+
+################################################################################
+### Actions: Curation
+###
+jobs:
+
+################################################################################
+### Stack build matrix
+###
+  stack:
+    name: stack-${{matrix.stack}}, ${{matrix.os}}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        stack: [ '2.7', 'latest' ]
+        os:    [ ubuntu-latest, macOS-latest ]
+
+    steps:
+      - name: 'Clone Project'
+        uses: actions/checkout@v3
+        
+      - name: Cache Stack Artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.stack
+            .stack-work
+          key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml') }}
+
+      - uses: haskell/actions/setup@v2
+        id:   setup-haskell-stack
+        name: 'Setup Stack'
+        with:
+          enable-stack:    true
+          stack-setup-ghc: true
+          stack-no-global: true
+
+      - name: Build
+        run: |
+          stack build --test --bench --no-run-tests --no-run-benchmarks
+
+################################################################################
+### Cabal build matrix
+###
+  cabal:
+    name: GHC-${{ matrix.ghc }}, cabal-${{matrix.cabal}}, ${{matrix.os}}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ghc:   [ '9.2', 'latest' ]
+        cabal: [ '3.6', 'latest' ]
+        os:    [ ubuntu-latest, macOS-latest ]
+
+    steps:
+      - name: 'Clone Project'
+        uses: actions/checkout@v3
+      
+      - name: 'Setup Haskell'
+        uses: haskell/actions/setup@v2
+        with:
+          ghc-version:   ${{ matrix.ghc   }}
+          cabal-version: ${{ matrix.cabal }}
+          
+      - name: 'Cabal - Configure'
+        run: |
+          cabal update
+          cabal clean
+          cabal configure $CONFIG $CONSTRAINTS
+          cabal freeze    $CONFIG $CONSTRAINTS
+
+      - name: 'Cabal - Cache'
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cabal/store
+            dist-newstyle
+          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
+          # restore keys is a fall back when the freeze plan is different
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.ghc }}-
+
+      - name: 'Cabal - Build'
+        run: |
+          cabal build --only-dependencies
+          cabal build $CONFIG
+
+      - name: 'Cabal - Check'
+        run: |
+          cabal check || true
+          cabal sdist -o `pwd`
+
+################################################################################
+### Check that the project builds with the specified lower bounds
+###
+  build-min-bounds:
+    env:
+      CONSTRAINTS: --project-file=cabal.project.oldest
+    name: 'Check: Cabal lower bounds'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ghc:   9.2.1
+            cabal: latest
+            os:    ubuntu-latest
+
+    steps:
+      - name: 'Clone Project'
+        uses: actions/checkout@v3
+      
+      - name: 'Setup Haskell'
+        uses: haskell/actions/setup@v2
+        with:
+          ghc-version:   ${{ matrix.ghc   }}
+          cabal-version: ${{ matrix.cabal }}
+ 
+      - name: 'Cabal - Configure'
+        run: |
+          cabal update
+          cabal clean
+          cabal configure $CONFIG $CONSTRAINTS
+          cabal freeze    $CONFIG $CONSTRAINTS
+
+      - name: 'Cabal - Cache'
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cabal/store
+            dist-newstyle
+          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
+          # restore keys is a fall back when the freeze plan is different
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.ghc }}-
+
+      - name: 'Cabal - Build'
+        run: |
+          cabal build --only-dependencies
+          cabal build $CONFIG
+
+      - name: 'Cabal - Check'
+        run: |
+          cabal check || true
+          cabal sdist -o `pwd`
+
+################################################################################
+### Check that all HLint hints are applied
+###
+  hlint:
+    name: 'Check: HLint'
+    needs: build-min-bounds
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 'Clone Project'
+        uses: actions/checkout@v3
+
+      - name: 'Set up HLint'
+        uses: haskell/actions/hlint-setup@v2
+        with:
+          version: '3.4'
+
+      - name: 'Run HLint'
+        uses: haskell/actions/hlint-run@v2
+        with:
+          path: '[ "bench/", "src/", "test/", "util/" ]' 
+          fail-on: warning
+
+################################################################################
+### Check for spelling errors
+###
+  spelling:
+    name: 'Check: Spelling'
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout-merge
+      if: "contains(github.event_name, 'pull_request')"
+      uses: actions/checkout@v2
+      with:
+        ref: refs/pull/${{github.event.pull_request.number}}/merge
+    - name: checkout
+      if: ${{ github.event_name == 'push' ||
+        (
+          contains(github.event.comment.body, '@check-spelling-bot apply')
+        ) }}
+      uses: actions/checkout@v2
+    - uses: check-spelling/check-spelling@main
+      id: spelling
+      with:
+        check_file_names: 1
+        experimental_apply_changes_via_bot: 0
+        post_comment: 0
+        suppress-comments: true
+        suppress_push_for_open_pull_request: 1
+
+################################################################################
+### Check that all test cases pass
+###
+  testing:
+    name: 'Check: Test-suite'
+    needs: build-min-bounds
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ghc:   latest
+            cabal: latest
+            os:    ubuntu-latest
+
+    steps:
+      - name: 'Clone Project'
+        uses: actions/checkout@v3
+      
+      - name: 'Setup Haskell'
+        uses: haskell/actions/setup@v2
+        with:
+          ghc-version:   latest
+          cabal-version: latest
+ 
+      - name: 'Cabal - Configure'
+        run: |
+            cabal update
+            cabal clean
+            cabal configure $CONFIG $CONSTRAINTS
+            cabal freeze    $CONFIG $CONSTRAINTS
+
+      - name: 'Cabal - Cache'
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cabal/store
+            dist-newstyle
+          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
+          # restore keys is a fall back when the freeze plan is different
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.ghc }}-
+
+      - name: 'Cabal - Build'
+        run: |
+          cabal build --only-dependencies
+          cabal build $CONFIG
+
+      - name: 'Cabal - Test'
+        run: |
+          cabal test

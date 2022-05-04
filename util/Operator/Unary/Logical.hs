@@ -1,3 +1,12 @@
+{-|
+
+Copyright   : © 2020 Alex Washburn
+License     : BSD-3-Clause
+Maintainer  : github@recursion.ninja
+Stability   : Stable
+
+-}
+
 {-# Language DeriveAnyClass #-}
 {-# Language DeriveDataTypeable #-}
 {-# Language DeriveGeneric #-}
@@ -21,6 +30,10 @@ import Test.QuickCheck hiding (generate)
 import Test.SmallCheck.Series
 
 
+{-|
+Representation of all possible /unary/ operators of type @(Bool -> Bool)@.
+Useful for both property and enumeration based testing.
+-}
 data UnaryLogicalOperator
     = AlwaysFalse
     | Identity
@@ -90,6 +103,20 @@ instance Show UnaryLogicalOperator where
                 AlwaysTrue  -> "True (Tautology)"
 
 
+{-|
+Convert from a closed, unnary function over 'Bool' to a 'UnaryLogicalOperator'.
+-}
+fromUnaryLogicalFunction :: (Bool -> Bool) -> UnaryLogicalOperator
+fromUnaryLogicalFunction f = case (f False, f True) of
+    (False, False) -> AlwaysFalse
+    (False, True ) -> Identity
+    (True , False) -> Negation
+    (True , True ) -> AlwaysTrue
+
+
+{-|
+Convert from a 'UnaryLogicalOperator' to a closed, unary function over 'Bool'.
+-}
 getUnaryLogicalOperator :: UnaryLogicalOperator -> Bool -> Bool
 getUnaryLogicalOperator x = case x of
     AlwaysFalse -> const False
@@ -98,18 +125,12 @@ getUnaryLogicalOperator x = case x of
     AlwaysTrue  -> const True
 
 
+{-|
+Query the Haskell expression of a 'UnaryLogicalOperator' representation symbolically as a 'String'.
+-}
 getUnaryLogicalSymbol :: UnaryLogicalOperator -> String
 getUnaryLogicalSymbol x = case x of
     AlwaysFalse -> "(const False)"
     Identity    -> "(id)"
     Negation    -> "(not)"
     AlwaysTrue  -> "(const True)"
-
-
-fromUnaryLogicalFunction :: (Bool -> Bool) -> UnaryLogicalOperator
-fromUnaryLogicalFunction f = case (f False, f True) of
-    (False, False) -> AlwaysFalse
-    (False, True ) -> Identity
-    (True , False) -> Negation
-    (True , True ) -> AlwaysTrue
-
