@@ -1,24 +1,20 @@
------------------------------------------------------------------------------
--- |
--- Module      :  Data.BitVector.LittleEndian.Binary
--- Copyright   :  (c) Alex Washburn 2020
--- License     :  BSD-style
---
--- Maintainer  :  github@recursion.ninja
--- Stability   :  provisional
--- Portability :  portable
---
--- Exposes the following instances for 'BitVector':
---
---  * 'MonoFoldable'
---  * 'MonoFunctor'
---  * 'MonoTraversable'
---
------------------------------------------------------------------------------
+{-|
+
+Copyright   : © 2020 Alex Washburn
+License     : BSD-3-Clause
+Maintainer  : github@recursion.ninja
+Stability   : Stable
+
+Exposes the following instances for 'BitVector':
+
+  * 'MonoFoldable'
+  * 'MonoFunctor'
+  * 'MonoTraversable'
+
+-}
 
 {-# Language BangPatterns #-}
 {-# Language TypeFamilies #-}
-
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -33,14 +29,12 @@ import Data.MonoTraversable
 import Data.Monoid ()
 
 
--- |
--- @since 0.1.0
+{-| @since 0.1.0 -}
 type instance Element BitVector
     = Bool
 
 
--- |
--- @since 0.1.0
+{-| @since 0.1.0 -}
 instance MonoFoldable BitVector where
 
     {-# INLINE ofoldMap #-}
@@ -156,8 +150,8 @@ instance MonoFoldable BitVector where
         (False, False, False, False) -> False
         -- Logical NOR
         (False, False, False, True) ->
-            let !lzs = toEnum $ countLeadingZeros bv
-            in  if (w - lzs) == 1 || n == 0 then even lzs else odd lzs
+            let !zeros = toEnum $ countLeadingZeros bv
+            in  if (w - zeros) == 1 || n == 0 then even zeros else odd zeros
         -- Converse non-implication
         --   Only True when of the form <0+1>
         (False, False, True , False) -> n == bit (fromEnum w - 1)
@@ -208,10 +202,10 @@ instance MonoFoldable BitVector where
         (False, False, False, False) -> False
         -- Logical NOR
         (False, False, False, True) ->
-            let !tzs = toEnum $ countTrailingZeros bv
-            in  if (w - tzs) == 1 || n == 0 then even tzs else odd tzs
+            let !zeros = toEnum $ countTrailingZeros bv
+            in  if (w - zeros) == 1 || n == 0 then even zeros else odd zeros
         -- Converse non-implication
-        (False, False, True , False) -> let !tzs = countTrailingZeros $ complement bv in odd tzs
+        (False, False, True , False) -> let !zeros = countTrailingZeros $ complement bv in odd zeros
         -- NOT p
         (False, False, True , True ) -> even w == even n
         -- Logical non-implication
@@ -222,14 +216,14 @@ instance MonoFoldable BitVector where
         (False, True , True , False) -> odd $ popCount n
         -- Logical NAND
         (False, True, True, True) ->
-            let !tos = countTrailingZeros $ complement bv
-                !x   = bit (fromEnum w) - 1
-                !y   = bit (fromEnum w) - 2
-            in  if n == x || n == y then odd tos else even tos
+            let !zeros = countTrailingZeros $ complement bv
+                !x     = bit (fromEnum w) - 1
+                !y     = bit (fromEnum w) - 2
+            in  if n == x || n == y then odd zeros else even zeros
         -- Logical AND
         (True, False, False, False) -> n == bit (fromEnum w) - 1
         -- Logical XNOR
-        (True, False, False, True ) -> let !pc = popCount n in if even w then even pc else odd pc
+        (True, False, False, True ) -> let !count = popCount n in if even w then even count else odd count
         -- Const q
         (True, False, True , False) -> n `testBit` (fromEnum w - 1)
         -- Logical implication
@@ -277,8 +271,7 @@ instance MonoFoldable BitVector where
     onotElem e = not . oelem e
 
 
--- |
--- @since 0.1.0
+{-| @since 0.1.0 -}
 instance MonoFunctor BitVector where
 
     -- | /O(1)/
@@ -290,8 +283,7 @@ instance MonoFunctor BitVector where
         (True , False) -> let !allOnes = bit (fromEnum w) - 1 in BV w $ n `xor` allOnes
 
 
--- |
--- @since 0.1.0
+{-| @since 0.1.0 -}
 instance MonoTraversable BitVector where
 
     -- | /O(n)/

@@ -1,33 +1,30 @@
------------------------------------------------------------------------------
--- |
--- Module      :  Data.BitVector.LittleEndian.Internal
--- Copyright   :  (c) Alex Washburn 2020
--- License     :  BSD-style
---
--- Maintainer  :  github@recursion.ninja
--- Stability   :  provisional
--- Portability :  portable
---
--- Little-endian bit vectors are isomorphic to a @[Bool]@ with the /least/
--- significant bit at the head of the list and the /most/ significant bit at the
--- end of the list. Consequently, the endianness of a bit vector affects the semantics of the
--- following typeclasses:
---
---   * Bits
---   * FiniteBits
---   * Semigroup
---   * Monoid
---   * MonoAdjustable
---   * MonoIndexable
---   * MonoKeyed
---   * MonoLookup
---   * MonoFoldable
---   * MonoFoldableWithKey
---   * MonoTraversable
---   * MonoTraversableWithKey
---   * MonoZipWithKey
---
------------------------------------------------------------------------------
+{-|
+
+Copyright   : © 2020 Alex Washburn
+License     : BSD-3-Clause
+Maintainer  : github@recursion.ninja
+Stability   : Stable
+
+Little-endian bit vectors are isomorphic to a @[Bool]@ with the /least/
+significant bit at the head of the list and the /most/ significant bit at the
+end of the list. Consequently, the endianness of a bit vector affects the semantics of the
+following typeclasses:
+
+  * Bits
+  * FiniteBits
+  * Semigroup
+  * Monoid
+  * MonoAdjustable
+  * MonoIndexable
+  * MonoKeyed
+  * MonoLookup
+  * MonoFoldable
+  * MonoFoldableWithKey
+  * MonoTraversable
+  * MonoTraversableWithKey
+  * MonoZipWithKey
+
+-}
 
 {-# Language BangPatterns #-}
 {-# Language CPP #-}
@@ -77,8 +74,9 @@ import GHC.Natural
 import Text.Read
 
 
--- |
--- A little-endian bit vector of non-negative dimension.
+{-|
+A little-endian bit vector of non-negative dimension.
+-}
 data BitVector
     = BV
     { dim :: {-# UNPACK #-} !Word
@@ -88,20 +86,19 @@ data BitVector
     }
 
 
--- ^ @since 0.1.0
+{-| @since 0.1.0 -}
 deriving stock instance Data BitVector
 
 
--- ^ @since 0.1.0
+{-| @since 0.1.0 -}
 deriving stock instance Generic BitVector
 
 
--- ^ @since 0.1.0
+{-| @since 0.1.0 -}
 deriving anyclass instance NFData BitVector
 
 
--- |
--- @since 0.1.0
+{-| @since 0.1.0 -}
 instance Bits BitVector where
 
     {-# INLINE (.&.) #-}
@@ -203,8 +200,7 @@ instance Bits BitVector where
     popCount = popCount . nat
 
 
--- |
--- @since 0.1.0
+{-| @since 0.1.0 -}
 instance Eq BitVector where
 
     {-# INLINE (==) #-}
@@ -214,44 +210,40 @@ instance Eq BitVector where
             naturalToBigNat (NatJ# bn) = bn
 
 
--- |
--- @since 0.1.0
+{-| @since 0.1.0 -}
 instance FiniteBits BitVector where
 
     {-# INLINE finiteBitSize #-}
     finiteBitSize = fromEnum . dim
 
     {-# INLINE countTrailingZeros #-}
-    countTrailingZeros (BV w n) = max 0 $ fromEnum w - lastSetBit - 1
-        where lastSetBit = I# (integerLog2# (toInteger n))
+    countTrailingZeros (BV w 0) = fromEnum w
+    countTrailingZeros (BV w n) =
+        let lastSetBit = I# (integerLog2# (toInteger n)) in max 0 $ fromEnum w - lastSetBit - 1
 
     {-# INLINE countLeadingZeros #-}
-    countLeadingZeros (BV w 0     ) = fromEnum w
     countLeadingZeros (BV w natVal) = case natVal of
-        NatS# v       -> countTrailingZeros $ iMask .|. W# v
-        NatJ# (BN# v) -> f $ ByteArray v
-        where
-            iMask = complement zeroBits `xor` (2 ^ w - 1)
-            !x    = fromEnum w
+        NatS# 0## -> fromEnum w
+        NatS# v   -> let iMask = complement zeroBits `xor` (2 ^ w - 1) in countTrailingZeros $ iMask .|. W# v
+        NatJ# (BN# arr) ->
+            let byteArr = ByteArray arr
+                !x      = fromEnum w
+                (q, r)  = x `quotRem` fromEnum bitsInWord
+                wMask   = complement zeroBits `xor` (2 ^ r - 1) :: Word
 
-            f :: ByteArray -> Int
-            f byteArr = g 0
-                where
-                    (q, r) = x `quotRem` fromEnum bitsInWord
-                    wMask  = complement zeroBits `xor` (2 ^ r - 1) :: Word
-
-                    g :: Int -> Int
-                    g !i
-                        | i >= q    = countTrailingZeros $ wMask .|. value
-                        | otherwise = let !v = countTrailingZeros value
-                                      in  if v == fromEnum bitsInWord then v + g (i + 1) else v
-                        where
-                            value :: Word
-                            value = byteArr `indexByteArray` i
+                g :: Int -> Int
+                g !i =
+                    let value :: Word
+                        value = byteArr `indexByteArray` i
+                    in  if i >= q
+                        then countTrailingZeros $ wMask .|. value
+                        else
+                            let !v = countTrailingZeros value
+                            in  if v == fromEnum bitsInWord then v + g (i + 1) else v
+            in  g 0
 
 
--- |
--- @since 0.1.0
+{-| @since 0.1.0 -}
 instance Hashable BitVector where
 
     hash (BV w n) = fromEnum w `hashWithSalt` hash n
@@ -259,8 +251,7 @@ instance Hashable BitVector where
     hashWithSalt salt bv = salt `hashWithSalt` hash bv
 
 
--- |
--- @since 0.1.0
+{-| @since 0.1.0 -}
 instance Monoid BitVector where
 
     {-# INLINE mappend #-}
@@ -275,8 +266,7 @@ instance Monoid BitVector where
     mempty = BV 0 0
 
 
--- |
--- @since 0.1.0
+{-| @since 0.1.0 -}
 instance Ord BitVector where
 
     {-# INLINE compare #-}
@@ -285,8 +275,7 @@ instance Ord BitVector where
         v  -> v
 
 
--- |
--- @since 1.2.0
+{-| @since 1.2.0 -}
 instance Read BitVector where
 
     {-# INLINABLE readPrec #-}
@@ -302,8 +291,7 @@ instance Read BitVector where
     readListPrec = readListPrecDefault
 
 
--- |
--- @since 0.1.0
+{-| @since 0.1.0 -}
 instance Semigroup BitVector where
 
     {-# INLINE (<>) #-}
@@ -327,29 +315,29 @@ instance Semigroup BitVector where
             go k !acc = go (k - x) $ (n `shiftL` k) + acc
 
 
--- |
--- @since 0.1.0
+{-| @since 0.1.0 -}
 instance Show BitVector where
 
     show (BV w n) = fold ["[", show w, "]", show n]
 
 
--- |
--- Create a bit vector from a /little-endian/ list of bits.
---
--- The following will hold:
---
--- > length . takeWhile not === countLeadingZeros . fromBits
--- > length . takeWhile not . reverse === countTrailingZeros . fromBits
---
--- /Time:/ \(\, \mathcal{O} \left( n \right) \)
---
--- /Since: 0.1.0/
---
--- ==== __Examples__
---
--- >>> fromBits [True, False, False]
--- [3]1
+{-|
+Create a bit vector from a /little-endian/ list of bits.
+
+The following will hold:
+
+> length . takeWhile not === countLeadingZeros . fromBits
+> length . takeWhile not . reverse === countTrailingZeros . fromBits
+
+/Time:/ \(\, \mathcal{O} \left( n \right) \)
+
+/Since: 0.1.0/
+
+==== __Examples__
+
+>>> fromBits [True, False, False]
+[3]1
+-}
 {-# INLINABLE fromBits #-}
 fromBits :: Foldable f => f Bool -> BitVector
 fromBits bs = BV (toEnum n) k
@@ -362,22 +350,23 @@ fromBits bs = BV (toEnum n) k
             | otherwise = (i + 1, v)
 
 
--- |
--- Create a /little-endian/ list of bits from a bit vector.
---
--- The following will hold:
---
--- > length . takeWhile not . toBits === countLeadingZeros
--- > length . takeWhile not . reverse . toBits === countTrailingZeros
---
--- /Time:/ \(\, \mathcal{O} \left( n \right) \)
---
--- /Since:/ 0.1.0
---
--- ==== __Examples__
---
--- >>> toBits [4]11
--- [True, True, False, True]
+{-|
+Create a /little-endian/ list of bits from a bit vector.
+
+The following will hold:
+
+> length . takeWhile not . toBits === countLeadingZeros
+> length . takeWhile not . reverse . toBits === countTrailingZeros
+
+/Time:/ \(\, \mathcal{O} \left( n \right) \)
+
+/Since:/ 0.1.0
+
+==== __Examples__
+
+>>> toBits [4]11
+[True, True, False, True]
+-}
 {-# INLINABLE toBits #-}
 toBits :: BitVector -> [Bool]
 toBits (BV w n) = go (fromEnum w) []
@@ -386,35 +375,36 @@ toBits (BV w n) = go (fromEnum w) []
         go i bs = let !j = i - 1 in go j $ n `testBit` j : bs
 
 
--- |
--- Create a bit vector of non-negative dimension from an integral value.
---
--- The integral value will be treated as an /signed/ number and the resulting
--- bit vector will contain the two's complement bit representation of the number.
---
--- The integral value will be interpreted as /little-endian/ so that the least
--- significant bit of the integral value will be the value of the 0th index of
--- the resulting bit vector and the most significant bit of the integral value
--- will be at index @dimension − 1@.
---
--- Note that if the bit representation of the integral value exceeds the
--- supplied dimension, then the most significant bits will be truncated in the
--- resulting bit vector.
---
--- /Time:/ \(\, \mathcal{O} \left( 1 \right) \)
---
--- /Since: 0.1.0/
---
--- ==== __Examples__
---
--- >>> fromNumber 8 96
--- [8]96
---
--- >>> fromNumber 8 -96
--- [8]160
---
--- >>> fromNumber 6 96
--- [6]32
+{-|
+Create a bit vector of non-negative dimension from an integral value.
+
+The integral value will be treated as an /signed/ number and the resulting
+bit vector will contain the two's complement bit representation of the number.
+
+The integral value will be interpreted as /little-endian/ so that the least
+significant bit of the integral value will be the value of the 0th index of
+the resulting bit vector and the most significant bit of the integral value
+will be at index @dimension − 1@.
+
+Note that if the bit representation of the integral value exceeds the
+supplied dimension, then the most significant bits will be truncated in the
+resulting bit vector.
+
+/Time:/ \(\, \mathcal{O} \left( 1 \right) \)
+
+/Since: 0.1.0/
+
+==== __Examples__
+
+>>> fromNumber 8 96
+[8]96
+
+>>> fromNumber 8 -96
+[8]160
+
+>>> fromNumber 6 96
+[6]32
+-}
 {-# INLINE [1] fromNumber #-}
 {-# SPECIALISE fromNumber :: Word -> CBool      -> BitVector #-}
 {-# SPECIALISE fromNumber :: Word -> CChar      -> BitVector #-}
@@ -468,68 +458,102 @@ fromNumber !dimValue !intValue = BV dimValue . intToNat $ mask .&. v
   #-}
 
 
--- |
--- Two's complement value of a bit vector.
---
--- /Time:/ \(\, \mathcal{O} \left( 1 \right) \)
---
--- /Since: 0.1.0/
---
--- ==== __Examples__
---
--- >>> toSignedNumber [4]0
--- 0
---
--- >>> toSignedNumber [4]3
--- 3
---
--- >>> toSignedNumber [4]7
--- 7
---
--- >>> toSignedNumber [4]8
--- -8
---
--- >>> toSignedNumber [4]12
--- -4
---
--- >>> toSignedNumber [4]15
--- -1
+{-|
+Two's complement value of a bit vector.
+
+/Time:/ \(\, \mathcal{O} \left( 1 \right) \)
+
+/Since: 0.1.0/
+
+==== __Examples__
+
+>>> toSignedNumber [4]0
+0
+
+>>> toSignedNumber [4]3
+3
+
+>>> toSignedNumber [4]7
+7
+
+>>> toSignedNumber [4]8
+-8
+
+>>> toSignedNumber [4]12
+-4
+
+>>> toSignedNumber [4]15
+-1
+-}
 {-# INLINE toSignedNumber #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CBool      #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CChar      #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CInt       #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CIntMax    #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CIntPtr    #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CLLong     #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CLong      #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CPtrdiff   #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CSChar     #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CShort     #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CSigAtomic #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CSize      #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CUChar     #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CUInt      #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CUIntMax   #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CUIntPtr   #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CULLong    #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CULong     #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CUShort    #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> CWchar     #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> Int        #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> Int8       #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> Int16      #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> Int32      #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> Int64      #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> Integer    #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> Natural    #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> Word       #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> Word8      #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> Word16     #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> Word32     #-}
+{-# SPECIALISE toSignedNumber :: BitVector -> Word64     #-}
 toSignedNumber :: Num a => BitVector -> a
 toSignedNumber (BV w n) = fromInteger v
     where
         !i = toInteger n
         !v
-            | n `testBit` (fromEnum w - 1) = negate $ shiftL 1 (fromEnum w) - i
+            | n `testBit` (fromEnum w - 1) = (+ 1) . negate $ shiftL 1 (fromEnum w) - i
             | otherwise                    = i
 
 
--- |
--- Unsigned value of a bit vector.
---
--- /Time:/ \(\, \mathcal{O} \left( 1 \right) \)
---
--- /Since: 0.1.0/
---
--- ==== __Examples__
---
--- >>> toSignedNumber [4]0
--- 0
---
--- >>> toSignedNumber [4]3
--- 3
---
--- >>> toSignedNumber [4]7
--- 7
---
--- >>> toSignedNumber [4]8
--- 8
---
--- >>> toSignedNumber [4]12
--- 12
---
--- >>> toSignedNumber [4]15
--- 15
+{-|
+Unsigned value of a bit vector.
+
+/Time:/ \(\, \mathcal{O} \left( 1 \right) \)
+
+/Since: 0.1.0/
+
+==== __Examples__
+
+>>> toUnsignedNumber [4]0
+0
+
+>>> toUnsignedNumber [4]3
+3
+
+>>> toUnsignedNumber [4]7
+7
+
+>>> toUnsignedNumber [4]8
+8
+
+>>> toUnsignedNumber [4]12
+12
+
+>>> toUnsignedNumber [4]15
+15
+-}
 {-# INLINE [1] toUnsignedNumber #-}
 toUnsignedNumber :: Num a => BitVector -> a
 toUnsignedNumber = fromInteger . toInteger . nat
@@ -540,74 +564,77 @@ toUnsignedNumber = fromInteger . toInteger . nat
   #-}
 
 
--- |
--- Get the dimension of a 'BitVector'. Preferable to 'finiteBitSize' as it
--- returns a type which cannot represent a non-negative value and a 'BitVector'
--- must have a non-negative dimension.
---
--- /Time:/ \(\, \mathcal{O} \left( 1 \right) \)
---
--- /Since: 0.1.0/
---
--- ==== __Examples__
---
--- >>> dimension [2]3
--- 2
---
--- >>> dimension [4]12
--- 4
+{-|
+Get the dimension of a 'BitVector'. Preferable to 'finiteBitSize' as it
+returns a type which cannot represent a non-negative value and a 'BitVector'
+must have a non-negative dimension.
+
+/Time:/ \(\, \mathcal{O} \left( 1 \right) \)
+
+/Since: 0.1.0/
+
+==== __Examples__
+
+>>> dimension [2]3
+2
+
+>>> dimension [4]12
+4
+-}
 {-# INLINE dimension #-}
 dimension :: BitVector -> Word
 dimension = dim
 
 
--- |
--- Determine if /any/ bits are set in the 'BitVector'.
--- Faster than @(0 ==) . popCount@.
---
--- /Time:/ \(\, \mathcal{O} \left( 1 \right) \)
---
--- /Since: 0.1.0/
---
--- ==== __Examples__
---
--- >>> isZeroVector [2]3
--- False
---
--- >>> isZeroVector [4]0
--- True
+{-|
+Determine if /any/ bits are set in the 'BitVector'.
+Faster than @(0 ==) . popCount@.
+
+/Time:/ \(\, \mathcal{O} \left( 1 \right) \)
+
+/Since: 0.1.0/
+
+==== __Examples__
+
+>>> isZeroVector [2]3
+False
+
+>>> isZeroVector [4]0
+True
+-}
 {-# INLINE isZeroVector #-}
 isZeroVector :: BitVector -> Bool
 isZeroVector = (0 ==) . nat
 
 
--- |
--- Get the /inclusive/ range of bits in 'BitVector' as a new 'BitVector'.
---
--- If either of the bounds of the subrange exceed the bit vector's dimension,
--- the resulting subrange will append an infinite number of zeroes to the end
--- of the bit vector in order to satisfy the subrange request.
---
--- /Time:/ \(\, \mathcal{O} \left( 1 \right) \)
---
--- /Since: 0.1.0/
---
--- ==== __Examples__
---
--- >>> subRange (0,2) [4]7
--- [3]7
---
--- >>> subRange (1, 3) [4]7
--- [3]3
---
--- >>> subRange (2, 4) [4]7
--- [3]1
---
--- >>> subRange (3, 5) [4]7
--- [3]0
---
--- >>> subRange (10, 20) [4]7
--- [10]0
+{-|
+Get the /inclusive/ range of bits in 'BitVector' as a new 'BitVector'.
+
+If either of the bounds of the subrange exceed the bit vector's dimension,
+the resulting subrange will append an infinite number of zeroes to the end
+of the bit vector in order to satisfy the subrange request.
+
+/Time:/ \(\, \mathcal{O} \left( 1 \right) \)
+
+/Since: 0.1.0/
+
+==== __Examples__
+
+>>> subRange (0,2) [4]7
+[3]7
+
+>>> subRange (1, 3) [4]7
+[3]3
+
+>>> subRange (2, 4) [4]7
+[3]1
+
+>>> subRange (3, 5) [4]7
+[3]0
+
+>>> subRange (10, 20) [4]7
+[10]0
+-}
 {-# INLINE subRange #-}
 subRange :: (Word, Word) -> BitVector -> BitVector
 subRange (!lower, !upper) (BV _ n)
@@ -626,41 +653,42 @@ subRange (!lower, !upper) (BV _ n)
                         in  BV (toEnum m) $ b .&. pred (1 `shiftL` m)
 
 
--- |
--- Determine the number of /set/ bits in the 'BitVector' up to, /but not including/, index @k@.
---
--- To determine the number of /unset/ bits in the 'BitVector`, use @k - rank bv k@.
---
--- Uses "broadword programming." Efficient on small 'BitVector's (10^3).
---
--- /Time:/ \(\, \mathcal{O} \left( \frac{n}{w} \right) \), where \(w\) is the number of bits in a 'Word'.
---
--- /Since: 1.1.0/
---
--- ==== __Examples__
---
--- >>> let bv = fromNumber 128 0 `setBit` 0 `setBit` 65
---
--- >>> rank bv   0  -- Count how many ones in the first 0 bits (always returns 0)
--- 0
---
--- >>> rank bv   1  -- Count how many ones in the first 1 bits
--- 1
---
--- >>> rank bv   2  -- Count how many ones in the first 2 bits
--- 1
---
--- >>> rank bv  65  -- Count how many ones in the first 65 bits
--- 1
---
--- >>> rank bv  66  -- Count how many ones in the first 66 bits
--- 1
---
--- >>> rank bv 128  -- Count how many ones in all 128 bits
--- 2
---
--- >>> rank bv 129  -- Out-of-bounds, fails gracefully
--- 2
+{-|
+Determine the number of /set/ bits in the 'BitVector' up to, /but not including/, index @k@.
+
+To determine the number of /unset/ bits in the 'BitVector`, use @k - rank bv k@.
+
+Uses "broadword programming." Efficient on small 'BitVector's (10^3).
+
+/Time:/ \(\, \mathcal{O} \left( \frac{n}{w} \right) \), where \(w\) is the number of bits in a 'Word'.
+
+/Since: 1.1.0/
+
+==== __Examples__
+
+>>> let bv = fromNumber 128 0 `setBit` 0 `setBit` 65
+
+>>> rank bv   0  -- Count how many ones in the first 0 bits (always returns 0)
+0
+
+>>> rank bv   1  -- Count how many ones in the first 1 bits
+1
+
+>>> rank bv   2  -- Count how many ones in the first 2 bits
+1
+
+>>> rank bv  65  -- Count how many ones in the first 65 bits
+1
+
+>>> rank bv  66  -- Count how many ones in the first 66 bits
+1
+
+>>> rank bv 128  -- Count how many ones in all 128 bits
+2
+
+>>> rank bv 129  -- Out-of-bounds, fails gracefully
+2
+-}
 rank
     :: BitVector
     -> Word -- ^ \(k\), the rank index
@@ -685,29 +713,30 @@ rank (BV w natVal) k =
                         value = byteArr `indexByteArray` i
 
 
--- |
--- Find the index of the k-th set bit in the 'BitVector'.
---
--- To find the index of the k-th /unset/ bit in the 'BitVector`, use @select (complement bv) k@.
---
--- Uses "broadword programming." Efficient on small 'BitVector's (10^3).
---
--- /Time:/ \(\, \mathcal{O} \left( \frac{n}{w} \right) \), where \(w\) is the number of bits in a 'Word'.
---
--- /Since: 1.1.0/
---
--- ==== __Examples__
---
--- >>> let bv = fromNumber 128 0 `setBit` 0 `setBit` 65
---
--- >>> select bv 0  -- Find the 0-indexed position of the first one bit
--- Just 0
---
--- >>> select bv 1  -- Find the 0-indexed position of the second one bit
--- Just 65
---
--- >>> select bv 2  -- There is no 3rd set bit, `select` fails
--- Nothing
+{-|
+Find the index of the k-th set bit in the 'BitVector'.
+
+To find the index of the k-th /unset/ bit in the 'BitVector`, use @select (complement bv) k@.
+
+Uses "broadword programming." Efficient on small 'BitVector's (10^3).
+
+/Time:/ \(\, \mathcal{O} \left( \frac{n}{w} \right) \), where \(w\) is the number of bits in a 'Word'.
+
+/Since: 1.1.0/
+
+==== __Examples__
+
+>>> let bv = fromNumber 128 0 `setBit` 0 `setBit` 65
+
+>>> select bv 0  -- Find the 0-indexed position of the first one bit
+Just 0
+
+>>> select bv 1  -- Find the 0-indexed position of the second one bit
+Just 65
+
+>>> select bv 2  -- There is no 3rd set bit, `select` fails
+Nothing
+-}
 select
     :: BitVector
     -> Word        -- ^ \(k\), the select index
@@ -731,27 +760,30 @@ select (BV w natVal) k = case natVal of
                         value = byteArr `indexByteArray` i
 
 
--- |
--- Number of bits in a 'Word'.
---
--- Used for "broadword programming."
+{-|
+Number of bits in a 'Word'.
+
+Used for "broadword programming."
+-}
 {-# INLINE bitsInWord #-}
 bitsInWord :: Word
 bitsInWord = toEnum $ finiteBitSize (undefined :: Word)
 
 
--- |
--- Clever use of 'popCount' and masking to get the number of set bits up to,
--- /but not including/,  index "k."
+{-|
+Clever use of 'popCount' and masking to get the number of set bits up to,
+/but not including/,  index "k."
+-}
 wordRank
     :: Word -- ^ Input 'Word'
-    -> Word -- ^ Index k, upt to which we count all set bits, k in range [ 0, finiteBitCount - 1 ]
+    -> Word -- ^ Index k, up to which we count all set bits, k in range [ 0, finiteBitCount - 1 ]
     -> Word -- ^ THe number of bits set within index "k."
 wordRank v x = toEnum . popCount $ suffixOnes .&. v where suffixOnes = (1 `shiftL` fromEnum x) - 1
 
 
--- |
--- Perform binary search with 'popCount' to locate the k-th set bit
+{-|
+Perform binary search with 'popCount' to locate the k-th set bit
+-}
 wordSelect
     :: Word -- ^ Input 'Word'
     -> Word -- ^ Find the k-th set bit, k in range [ 0, finiteBitCount - 1 ]
@@ -778,8 +810,9 @@ wordSelect v = go 0 63
                             | otherwise           = (1 `shiftL` (fromEnum j + 1)) - 1
 
 
--- |
--- Convert a 'Word' to an 'Int', but only if the 'Word' value is small enough.
+{-|
+Convert a 'Word' to an 'Int', but only if the 'Word' value is small enough.
+-}
 toInt :: Word -> Maybe Int
 toInt w
     | w > maxInt = Nothing
@@ -787,10 +820,11 @@ toInt w
     where maxInt = toEnum (maxBound :: Int)
 
 
--- |
--- While similar to the function 'naturalFromInteger' exported from GHC.Natural,
--- this function does not throw an exception when an negative valued 'Integer'
--- is supplied and is also compatible with base < 4.10.0.0.
+{-|
+While similar to the function 'naturalFromInteger' exported from GHC.Natural,
+this function does not throw an exception when an negative valued 'Integer'
+is supplied and is also compatible with base < 4.10.0.0.
+-}
 {-# INLINE intToNat #-}
 -- {-# NOINLINE intToNat #-}
 intToNat :: Integer -> Natural

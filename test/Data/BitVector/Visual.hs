@@ -1,3 +1,12 @@
+{-|
+
+Copyright   : © 2020 Alex Washburn
+License     : BSD-3-Clause
+Maintainer  : github@recursion.ninja
+Stability   : Stable
+
+-}
+
 {-# Language DeriveDataTypeable #-}
 {-# Language DeriveGeneric #-}
 {-# Language DerivingStrategies #-}
@@ -23,18 +32,34 @@ import Test.QuickCheck hiding (generate)
 import Test.SmallCheck.Series
 
 
+{-|
+New-typed 'BitVector' with special instances of:
+
+  * 'Bounded' constraining the *length ≤ 8.*
+  * 'Show' providing a more detailed rendering suitable for use with testing frameworks which display counterexamples.
+-}
 newtype VisualBitVector
     = VBV BitVector
     deriving newtype (Eq, NFData, Ord)
     deriving stock (Data, Generic)
 
 
+{-|
+New-typed 'BitVector' with special instances of:
+
+  * 'Bounded' constraining the *length ≤ 3.*
+  * 'Show' providing a more detailed rendering suitable for use with testing frameworks which display counterexamples.
+-}
 newtype VisualBitVectorSmall
     = VBVS BitVector
     deriving newtype (Eq, NFData, Ord)
     deriving stock (Data, Generic)
 
 
+{-|
+Type-class for accessing 'BitVector' from structures.
+Intended to facilitate generic testing code operating on either 'BitVector', 'VisualBitVector', or 'VisualBitVectorSmall' types.
+-}
 class HasBitVector a where
 
     getBitVector :: a -> BitVector

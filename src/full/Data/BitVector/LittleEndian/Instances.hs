@@ -1,16 +1,13 @@
------------------------------------------------------------------------------
--- |
--- Module      :  Data.BitVector.LittleEndian.Instances
--- Copyright   :  (c) Alex Washburn 2020
--- License     :  BSD-style
---
--- Maintainer  :  github@recursion.ninja
--- Stability   :  provisional
--- Portability :  portable
---
--- Exposes the all the instances for 'BitVector'.
---
------------------------------------------------------------------------------
+{-|
+
+Copyright   : © 2020 Alex Washburn
+License     : BSD-3-Clause
+Maintainer  : github@recursion.ninja
+Stability   : Stable
+
+Exposes the all the instances for 'BitVector'.
+
+-}
 
 {-# Language NoImplicitPrelude #-}
 

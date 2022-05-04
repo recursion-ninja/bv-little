@@ -1,3 +1,12 @@
+{-|
+
+Copyright   : © 2020 Alex Washburn
+License     : BSD-3-Clause
+Maintainer  : github@recursion.ninja
+Stability   : Stable
+
+-}
+
 {-# Language BangPatterns #-}
 {-# Language DeriveAnyClass #-}
 {-# Language DeriveGeneric #-}
@@ -19,6 +28,10 @@ import Test.QuickCheck hiding (generate)
 import Test.SmallCheck.Series
 
 
+{-|
+Representation of all possible binary operators of type @(Bool -> Bool -> Bool)@.
+Useful for both property and enumeration based testing.
+-}
 newtype ComparisonOperator
     = CO { getComparator :: Bool -> Bool -> Ordering }
     deriving anyclass (NFData)
@@ -31,14 +44,13 @@ comparatorList = do
     x <- [minBound .. maxBound]
     y <- [minBound .. maxBound]
     z <- [minBound .. maxBound]
-    pure . CO $ \a b -> if not a && not b
-        then w
-        else if not a && b
-            then x
-            else if a && not b
-                then y
-                else {-     a &&     b   -}
-                     z
+    pure
+        $ let
+            op False False = w
+            op False True  = x
+            op True  False = y
+            op True  True  = z
+          in  CO op
 
 
 instance Arbitrary ComparisonOperator where

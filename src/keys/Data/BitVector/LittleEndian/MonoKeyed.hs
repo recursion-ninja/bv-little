@@ -1,29 +1,25 @@
------------------------------------------------------------------------------
--- |
--- Module      :  Data.BitVector.LittleEndian.Binary
--- Copyright   :  (c) Alex Washburn 2020
--- License     :  BSD-style
---
--- Maintainer  :  github@recursion.ninja
--- Stability   :  provisional
--- Portability :  portable
---
--- Exposes the following instances for 'BitVector':
---
---  * 'MonoAdjustable'
---  * 'MonoFoldableWithKey'
---  * 'MonoIndexable'
---  * 'MonoKeyed'
---  * 'MonoLookup'
---  * 'MonoTraversableWithKey'
---  * 'MonoZip'
---  * 'MonoZipWithKey'
---
------------------------------------------------------------------------------
+{-|
+
+Copyright   : © 2020 Alex Washburn
+License     : BSD-3-Clause
+Maintainer  : github@recursion.ninja
+Stability   : Stable
+
+Exposes the following instances for 'BitVector':
+
+  * 'MonoAdjustable'
+  * 'MonoFoldableWithKey'
+  * 'MonoIndexable'
+  * 'MonoKeyed'
+  * 'MonoLookup'
+  * 'MonoTraversableWithKey'
+  * 'MonoZip'
+  * 'MonoZipWithKey'
+
+-}
 
 {-# Language BangPatterns #-}
 {-# Language TypeFamilies #-}
-
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -41,14 +37,12 @@ import Data.MonoTraversable ()
 import Data.MonoTraversable.Keys
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 type instance MonoKey BitVector
     = Word
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoAdjustable BitVector where
 
     -- | /O(1)/
@@ -71,8 +65,7 @@ instance MonoAdjustable BitVector where
         where !i = fromEnum k
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoFoldableWithKey BitVector where
 
     -- | /O(n)/
@@ -122,8 +115,7 @@ instance MonoFoldableWithKey BitVector where
                 in  go i a
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoIndexable BitVector where
 
     -- | /O(1)/
@@ -139,8 +131,7 @@ instance MonoIndexable BitVector where
                 ]
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoKeyed BitVector where
 
     -- | /O(n)/
@@ -159,8 +150,7 @@ instance MonoKeyed BitVector where
         in  go w $ BV w 0
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoLookup BitVector where
 
     -- | /O(1)/
@@ -170,8 +160,7 @@ instance MonoLookup BitVector where
         | otherwise = Just $ n `testBit` fromEnum k
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoTraversableWithKey BitVector where
 
     -- | /O(n)/
@@ -179,8 +168,7 @@ instance MonoTraversableWithKey BitVector where
     otraverseWithKey f = fmap fromBits . traverseWithKey (f . toEnum) . toBits
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoZip BitVector where
 
     -- | /O(1)/
@@ -229,8 +217,7 @@ instance MonoZip BitVector where
     -- cases of f p q
 
 
--- |
--- @since 1.0.0
+{-| @since 1.0.0 -}
 instance MonoZipWithKey BitVector where
 
     {-# INLINE ozipWithKey #-}
