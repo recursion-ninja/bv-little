@@ -1,11 +1,14 @@
-### Unreleased Changes
+`bv-little` *follows semantic versioning [(SemVer)](https://semver.org/).*
+
+
+## Unreleased Changes
 
   * Added specializations
 
   * Dropping support for GHC < 9.2.1
 
 
-### [v1.2.0][7]
+## [v1.2.0][7]
 
   * Restructuring library to expose instances in a refined, "opt-in" manner
 
@@ -16,25 +19,25 @@
   * Added `Read` instance
 
 
-### [v1.1.1][6]
+## [v1.1.1][6]
 
   * Added more benchmarks
 
   * Updated test suite to be more reliable
 
-### [v1.1.0][5]
+## [v1.1.0][5]
 
   * Added `rank` and `select` functions
 
 
-### [v1.0.1][4]
+## [v1.0.1][4]
 
   * Correcting Eq instance to test for value equality and not construction equality
 
   * Updated unit tests do not fail when the antecedent of logical implication cannot be satisfied
 
 
-### [v1.0.0][3]
+## [v1.0.0][3]
 
   * Added explicit recursion to monomorphic folds to improve time and space performance
 
@@ -61,12 +64,12 @@
     * `ozipWith`
 
 
-### [v0.1.2][2]
+## [v0.1.2][2]
 
   * Updating to base bounds for GHC 8.6.1
 
 
-### [v0.1.1][1]
+## [v0.1.1][1]
 
   * Updated to well-typed internal representation
 
@@ -81,7 +84,7 @@
   * Increased test suite coverage
 
 
-### [v0.1.0][0]
+## [v0.1.0][0]
 
   * Created instances of applicable typeclass instances
 
