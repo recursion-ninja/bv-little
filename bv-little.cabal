@@ -4,7 +4,7 @@ Version:            1.2.0
 Stability:          Stable
 Build-Type:         Simple
 Tested-With:
-  GHC == 9.2.2
+  GHC == 9.2.3
 
 Author:             Alex Washburn
 Copyright:          (c) Alex Washburn 2020

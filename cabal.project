@@ -5,7 +5,7 @@
 ---------------------------------------------------------------------------------
 
 executable-static: False
-with-compiler: ghc-9.2.2
+with-compiler: ghc-9.2.3
 
 
 ---------------------------------------------------------------------------------
@@ -123,6 +123,7 @@ allow-newer:
     integer-gmp,
     template-haskell,
     -- Internal compiler library
+    ghc-bignum,
     ghc-boot,
     ghc-boot-th,
     ghc-heap,
@@ -157,3 +158,6 @@ preferences:
     aeson          >= 2.0.0,
     bytestring     >= 0.11.3,
     text           >= 2.0.0,
+
+constraints:
+    hashable >= 1.4.0
