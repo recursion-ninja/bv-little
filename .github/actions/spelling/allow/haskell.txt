@@ -2,6 +2,7 @@ Abitrary
 aeson
 anyclass
 bgroup
+bignum
 bytestring
 CBool
 CChar
