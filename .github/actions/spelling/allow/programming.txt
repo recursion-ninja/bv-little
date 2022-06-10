@@ -38,3 +38,6 @@ workflows
 XNOR
 xor
 yaml
+semver
+versioning
+
