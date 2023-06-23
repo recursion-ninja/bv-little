@@ -93,7 +93,7 @@ Library instances
     , bv-little:instances-mono-traversable
     , bv-little:instances-mono-traversable-keys
     , bv-little:instances-quickcheck
---  ,  bv-little:instances-text-show
+    , bv-little:instances-text-show
 
   exposed-modules:
     Data.BitVector.LittleEndian.Instances
@@ -188,22 +188,25 @@ Library instances-quickcheck
     public
 
 
---Library instances-text-show
---
---  visibility: public
---        
---  build-depends:      base                  >= 4.13  && < 5
---                    , bv-little:core
---                    , text-show             >= 3.8
---
---  default-language: GHC2021
---
---  exposed-modules:
---    Data.BitVector.LittleEndian.TextShow
---
---  hs-source-dirs:
---    src/libs
+Library instances-text-show
 
+  import:
+    language
+
+  build-depends:
+    , base                  >= 4.13  && < 5
+    , bv-little:core
+    , text-show             >= 3.8
+
+  exposed-modules:
+    Data.BitVector.LittleEndian.TextShow
+
+  hs-source-dirs:
+    src/libs
+
+  visibility:
+    public
+        
 
 Test-Suite Test-Suite
 

@@ -3,6 +3,8 @@
 
 ## Unreleased Changes
 
+  * Added back `TextShow` instances
+
   * Added specializations
 
   * Dropping support for GHC < 9.2.1
