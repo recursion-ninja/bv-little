@@ -43,7 +43,7 @@ import Test.Tasty.QuickCheck hiding (forAll, testProperty, (.&.))
 import Test.Tasty.QuickCheck qualified as QC
 import Test.Tasty.SmallCheck hiding (Property, testProperty, (==>))
 import Test.Tasty.SmallCheck qualified as SC
---import TextShow (TextShow(showb), toString)
+import TextShow (TextShow(showb), toString)
 
 
 infix 0 -=>
@@ -78,7 +78,7 @@ testSuite = testGroup
     , orderingProperties
     , semigroupProperties
     , showProperties
---    , textshowProperties
+    , textshowProperties
     , bitVectorProperties
     , bitVectorRankSelect
     , monoFunctorEquivalence
@@ -561,7 +561,7 @@ showProperties = testGroup
         nonNullString = not . null . show
 
 
-{-
+
 textshowProperties :: TestTree
 textshowProperties = testGroup "Properties of TextShow"
     [ QC.testProperty "textshow and show result agree" textshowCoherence
@@ -570,7 +570,6 @@ textshowProperties = testGroup "Properties of TextShow"
     textshowCoherence :: BitVector -> Property
     textshowCoherence bv =
         (toString . showb $ bv) === show bv
--}
 
 
 bitVectorProperties :: TestTree

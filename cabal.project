@@ -89,6 +89,7 @@ package bv-little
         -Werror
         -Weverything
         -- Exclusions:
+        -Wno-all-missed-specialisations
         -Wno-implicit-prelude
         -Wno-missing-import-lists
         -Wno-missing-kind-signatures
