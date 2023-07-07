@@ -15,4 +15,4 @@ constraints:
 
 packages: .
         
-with-compiler: ghc-9.2.1
+with-compiler: ghc-9.2.3
