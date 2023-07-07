@@ -4,6 +4,7 @@ broadword
 changelog
 codebase
 deps
+dhall
 dirs
 docdir
 endian
@@ -38,6 +39,7 @@ workflows
 XNOR
 xor
 yaml
+yml
 semver
 versioning
 
