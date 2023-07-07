@@ -1,16 +1,16 @@
 `bv-little` *follows semantic versioning [(SemVer)](https://semver.org/).*
 
 
-## Unreleased Changes
+## [v1.3.0][7]
 
-  * Added back `TextShow` instances
+  * Added back `TextShow` instance
 
   * Added specializations
 
-  * Dropping support for GHC < 9.2.1
+  * Dropping support for GHC < 9.2.3
 
 
-## [v1.2.0][7]
+## v1.2.0
 
   * Restructuring library to expose instances in a refined, "opt-in" manner
 
@@ -104,4 +104,4 @@
 [4]: https://github.com/recursion-ninja/bv-little/tree/v1.0.1
 [5]: https://github.com/recursion-ninja/bv-little/tree/v1.1.0
 [6]: https://github.com/recursion-ninja/bv-little/tree/v1.1.1
-[7]: https://github.com/recursion-ninja/bv-little/tree/v1.2.0
+[7]: https://github.com/recursion-ninja/bv-little/tree/v1.3.0
