@@ -9,7 +9,7 @@ constraints:
   any.mono-traversable-keys ==0.2.*,
   any.primitive ==0.7.2.*,
   any.QuickCheck ==2.14.2.*,
-  any.text-show ==3.8.*,
+  any.text-show ==3.9.*,
   any.semigroups ==0.18.*,
   any.smallcheck ==1.1.5.*
 

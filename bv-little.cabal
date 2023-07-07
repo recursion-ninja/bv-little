@@ -198,7 +198,7 @@ Library instances-text-show
   build-depends:
     , base                  >= 4.13  && < 5
     , bv-little:core
-    , text-show             >= 3.8
+    , text-show             >= 3.9
 
   exposed-modules:
     Data.BitVector.LittleEndian.TextShow
@@ -235,7 +235,7 @@ Test-Suite Test-Suite
     , tasty-hunit
     , tasty-quickcheck
     , tasty-smallcheck
---    , text-show             >= 3.8
+    , text-show              >= 3.9
 
   if !impl(ghc >=8.0)
     build-depends:
