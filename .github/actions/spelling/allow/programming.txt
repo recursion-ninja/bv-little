@@ -10,6 +10,7 @@ docdir
 endian
 Endian
 endianness
+endif
 enum
 Enum
 exitcode
