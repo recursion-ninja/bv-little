@@ -1,6 +1,6 @@
 Cabal-Version:      3.0
 Name:               bv-little
-Version:            1.3.0
+Version:            1.3.1
 Stability:          Stable
 Build-Type:         Simple
 Tested-With:
