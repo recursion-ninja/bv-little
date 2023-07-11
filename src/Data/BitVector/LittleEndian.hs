@@ -26,9 +26,9 @@ convert the 'BitVector' using either 'toSignedNumber' or 'toUnsignedNumber'.
 
 This module defines 'rank' and 'select' operations for 'BitVector' as a
 <https://en.wikipedia.org/wiki/Succinct_data_structure succinct data structure>.
-These operations are not /o(1)/ so 'BitVector' is not a /true/ succinct data
-structure. However, it could potentially be extend to support this in the
-future.
+These operations are not \( \mathcal{o} \left( 1 \right) \) so 'BitVector' is not a
+/true/ succinct data structure. However, it could potentially be extend to support
+this in the future.
 -}
 
 {-# Language Safe #-}

@@ -5,7 +5,6 @@
 ---------------------------------------------------------------------------------
 
 executable-static: False
-with-compiler: ghc-9.4.5
 
 ---------------------------------------------------------------------------------
 -- Output paths
@@ -34,8 +33,7 @@ haddock-tests:            True
 haddock-benchmarks:       True
 haddock-internal:         True
 haddock-hyperlink-source: True
-jobs:                     1
--- $ncpus
+jobs:                     $ncpus
 keep-going:               True
 minimize-conflict-set:    True
 
