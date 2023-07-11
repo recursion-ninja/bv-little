@@ -5,7 +5,7 @@ License     : BSD-3-Clause
 Maintainer  : github@recursion.ninja
 Stability   : Stable
 
-Exposes the all the instances for 'BitVector'.
+Exposes the all the instances for 'Data.BitVector.LittleEndian.BitVector'.
 
 -}
 

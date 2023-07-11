@@ -22,7 +22,8 @@ module Data.BitVector.LittleEndian.MonoTraversable
     (
     ) where
 
-import Data.BitVector.LittleEndian.Internal
+import Data.BitVector.LittleEndian (BitVector)
+import Data.BitVector.LittleEndian.Internal hiding (BitVector)
 import Data.Bits
 import Data.Foldable
 import Data.MonoTraversable

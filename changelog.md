@@ -1,6 +1,11 @@
 `bv-little` *follows semantic versioning [(SemVer)](https://semver.org/).*
 
 
+## [v1.3.1][7]
+
+  * Fixed Haddock documentation rendering in sub-libraries
+
+
 ## [v1.3.0][7]
 
   * Added back `TextShow` instance

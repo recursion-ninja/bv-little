@@ -27,7 +27,8 @@ module Data.BitVector.LittleEndian.MonoKeyed
     (
     ) where
 
-import Data.BitVector.LittleEndian.Internal
+import Data.BitVector.LittleEndian (BitVector)
+import Data.BitVector.LittleEndian.Internal hiding (BitVector)
 import Data.BitVector.LittleEndian.MonoTraversable ()
 import Data.Bits
 import Data.Foldable (fold)

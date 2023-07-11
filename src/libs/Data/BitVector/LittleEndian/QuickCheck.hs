@@ -5,7 +5,7 @@ License     : BSD-3-Clause
 Maintainer  : github@recursion.ninja
 Stability   : Stable
 
-Exposes the 'Abitrary' and 'CoArbitrary' instances for 'BitVector'.
+Exposes the 'Arbitrary' and 'CoArbitrary' instances for 'BitVector'.
 
 -}
 
@@ -17,7 +17,8 @@ module Data.BitVector.LittleEndian.QuickCheck
     (
     ) where
 
-import Data.BitVector.LittleEndian.Internal
+import Data.BitVector.LittleEndian (BitVector)
+import Data.BitVector.LittleEndian.Internal hiding (BitVector)
 import Data.Bits
 import Data.Monoid ()
 import GHC.Natural

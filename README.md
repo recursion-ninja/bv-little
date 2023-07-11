@@ -19,7 +19,30 @@ For an implementation of *big-endian, immutable* bit vectors, use the [`bv`](htt
 For an implementation of *little-endian, mutable* bit vectors, use the [`bitvec`](https://hackage.haskell.org/package/bitvec) package.
 
 
-#### Tests
+### Accessing type-class instances
+
+This package utilizes the ["multiple sub-libraries"][0] feature of Cabal.
+The intended usage is an "opt-in" dependency footprint for the `bv-little` package, as not all type-class instances which are defined are exposed by default.
+Therefore package consumers can select which, if any, type-class instances outside of the [core libraries][1] they wish to have exposed and transitively depend on the associated package(s).
+
+#### New type-class instance exposure procedure:
+
+1. All `BitVector` instances of type-classes defined in `base` are exported by default from the `Data.BitVector.LittleEndian` module.
+
+2. Each `BitVector` instance of a type-class defined in a package *other than* `base` is exposed through a specific sub-library dependency and a special exposing module.
+
+To access an instance of a type-class defined *outside* `base`, add the requisite sub-library to your `build-depends` and `import`  the corresponding exposing module within your code-base.
+
+| Sub-library Dependency                      | Exposing Module                               | Type-class Instance(s)       |
+|:--------------------------------------------|:----------------------------------------------|:-----------------------------|
+| `bv-little:instances-binary`                | `Data.BitVector.LittleEndian.Binary`          | <ul><li>`Binary`</li></ul>   |
+| `bv-little:instances-mono-traversable`      | `Data.BitVector.LittleEndian.MonoTraversable` | <ul><li>`MonoFoldable`</li><li>`MonoFunctor`</li><li>`MonoTraversable`</li></ul> |
+| `bv-little:instances-mono-traversable-keys` | `Data.BitVector.LittleEndian.MonoKeyed`       | <ul><li>`MonoAdjustable`</li><li>`MonoFoldableWithKey`</li><li>`MonoIndexable`</li><li>`MonoKeyed`</li><li>`MonoLookup`</li><li>`MonoTraversableWithKey`</li><li>`MonoZip`</li><li>`MonoZipWithKey`</li></ul> |
+| `bv-little:instances-quickcheck`            | `Data.BitVector.LittleEndian.QuickCheck`      | <ul><li>`Arbitrary`</li><li>`CoArbitrary`</li></ul> |
+| `bv-little:instances-text-show`             | `Data.BitVector.LittleEndian.TextShow`        | <ul><li>`TextShow`</li></ul> |
+
+
+### Tests
 
 The test suite ensures that all type-class instances are "lawful" and that data-structure–specific functionality is well defined.
 
@@ -30,7 +53,7 @@ The `TestSuite.hs` file contains the specification. It can be run by invoking an
   * `stack test`
 
 
-#### Benchmarks
+### Benchmarks
 
 The benchmarks provide an empyrical check for the asymptotic complexity of data structure operations and also provide easy metrics for detecting performance regressions.
 
@@ -39,3 +62,7 @@ The `Benchmarks.hs` file contains these metrics. It can be run by invoking any o
   * `cabal bench`
 
   * `stack bench`
+
+
+[0]: https://cabal.readthedocs.io/en/3.4/cabal-package.html?highlight=visibility#sublibs
+[1]: https://github.com/haskell/core-libraries-committee#core-libraries

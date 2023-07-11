@@ -19,7 +19,8 @@ module Data.BitVector.LittleEndian.Binary
 
 import Control.Applicative (Applicative(liftA2))
 import Data.Binary
-import Data.BitVector.LittleEndian.Internal
+import Data.BitVector.LittleEndian (BitVector)
+import Data.BitVector.LittleEndian.Internal hiding (BitVector)
 #if MIN_VERSION_base(4,18,0)
 import Prelude hiding (liftA2)
 #endif
