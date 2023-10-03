@@ -1,6 +1,11 @@
 `bv-little` *follows semantic versioning [(SemVer)](https://semver.org/).*
 
 
+## [v1.3.2][9]
+
+  * Updating dependency upper bounds
+
+
 ## [v1.3.1][8]
 
   * Fixed Haddock documentation rendering in sub-libraries
@@ -111,3 +116,4 @@
 [6]: https://github.com/recursion-ninja/bv-little/tree/v1.1.1
 [7]: https://github.com/recursion-ninja/bv-little/tree/v1.3.0
 [8]: https://github.com/recursion-ninja/bv-little/tree/v1.3.1
+[8]: https://github.com/recursion-ninja/bv-little/tree/v1.3.2

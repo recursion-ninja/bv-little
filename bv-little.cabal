@@ -1,6 +1,6 @@
 Cabal-Version:      3.0
 Name:               bv-little
-Version:            1.3.1
+Version:            1.3.2
 Stability:          Stable
 Build-Type:         Simple
 Tested-With:
@@ -73,10 +73,10 @@ Library core
 
   build-depends:
     base >= 4.16.1 && < 5,
-    deepseq >= 1.4.6 && ^>= 1.4,
-    hashable >= 1.3 && ^>= 1.4,
-    integer-gmp ^>= 1.1,
-    primitive ^>= 0.7.2,
+    deepseq >= 1.4.6,
+    hashable >= 1.3,
+    integer-gmp >= 1.1,
+    primitive >= 0.7.2,
 
   exposed-modules:
     Data.BitVector.LittleEndian.Internal
@@ -117,7 +117,7 @@ Library instances-binary
 
   build-depends:
     base >= 4.16.1 && < 5,
-    binary ^>= 0.8,
+    binary >= 0.8,
     bv-little,
     bv-little:core,
 
@@ -140,7 +140,7 @@ Library instances-mono-traversable
     base >= 4.16.1 && < 5,
     bv-little,
     bv-little:core,
-    mono-traversable >= 1.0.5.0 && ^>= 1.0
+    mono-traversable >= 1.0.5.0 && >= 1.0
 
   exposed-modules:
     Data.BitVector.LittleEndian.MonoTraversable
@@ -162,9 +162,9 @@ Library instances-mono-traversable-keys
     bv-little,
     bv-little:core,
     bv-little:instances-mono-traversable,
-    keys ^>= 3.12,
-    mono-traversable >= 1.0.5.0 && ^>= 1.0,
-    mono-traversable-keys >= 0.2 && ^>= 0.3,
+    keys >= 3.12,
+    mono-traversable >= 1.0.5.0,
+    mono-traversable-keys >= 0.2,
 
   exposed-modules:
     Data.BitVector.LittleEndian.MonoKeyed
@@ -185,7 +185,7 @@ Library instances-quickcheck
     base >= 4.16.1 && < 5,
     bv-little,
     bv-little:core,
-    QuickCheck >= 2.14.2 && ^>= 2.14
+    QuickCheck >= 2.14.2
 
   exposed-modules:
     Data.BitVector.LittleEndian.QuickCheck
@@ -206,7 +206,7 @@ Library instances-text-show
     base >= 4.16.1 && < 5,
     bv-little,
     bv-little:core,
-    text-show >= 3.9 && ^>= 3.10,
+    text-show >= 3.9,
 
   exposed-modules:
     Data.BitVector.LittleEndian.TextShow
@@ -233,17 +233,17 @@ Test-Suite Test-Suite
     base >= 4.16.1 && < 5,
     bv-little,
     bv-little:instances,
-    deepseq >= 1.4.6 && ^>= 1.4,
-    hashable >= 1.3 && ^>= 1.4,
-    mono-traversable >= 1.0.5.0 && ^>= 1.0,
-    mono-traversable-keys >= 0.2 && ^>= 0.3,
-    QuickCheck >= 2.14.2 && ^>= 2.14.2,
-    smallcheck >= 1.1.5 && ^>= 1.2,
+    deepseq >= 1.4.6,
+    hashable >= 1.3,
+    mono-traversable >= 1.0.5.0,
+    mono-traversable-keys >= 0.2,
+    QuickCheck >= 2.14.2,
+    smallcheck >= 1.1.5,
     tasty,
     tasty-hunit,
     tasty-quickcheck,
     tasty-smallcheck,
-    text-show >= 3.9 && ^>= 3.10,
+    text-show >= 3.9
 
   hs-source-dirs:
     test,
@@ -271,17 +271,17 @@ Benchmark Benchmark-suite
     base >= 4.16.1 && < 5,
     bv-little,
     bv-little:instances,
-    criterion ^>= 1.6,
-    deepseq >= 1.4.6 && ^>= 1.4,
-    hashable >= 1.3 && ^>= 1.4,
-    mono-traversable >= 1.0.5.0 && ^>= 1.0,
-    QuickCheck >= 2.14.2 && ^>= 2.14.2,
-    smallcheck >= 1.1.5 && ^>= 1.2,
-    tasty ^>= 1.4,
-    tasty-hunit ^>= 0.10,
-    tasty-quickcheck ^>= 0.10,
-    tasty-smallcheck ^>= 0.8,
-    text-show >= 3.9 && ^>= 3.10,
+    criterion >= 1.6,
+    deepseq >= 1.4.6,
+    hashable >= 1.3,
+    mono-traversable >= 1.0.5.0,
+    QuickCheck >= 2.14.2,
+    smallcheck >= 1.1.5,
+    tasty >= 1.4,
+    tasty-hunit >= 0.10,
+    tasty-quickcheck >= 0.10,
+    tasty-smallcheck >= 0.8,
+    text-show >= 3.9,
 
   ghc-options:
     -threaded
@@ -320,12 +320,12 @@ Benchmark Benchmark-heap-stack
     base >= 4.16.1 && < 5,
     bv-little,
     bv-little:instances,
---        criterion ^>= 1.6,
-    deepseq >= 1.4.6 && ^>= 1.4,
+--        criterion >= 1.6,
+    deepseq >= 1.4.6,
 --    hashable          >=1.2.3.2,
 --    mono-traversable  >=1.0.5.0,
-    QuickCheck >= 2.14.2 && ^>= 2.14.2,
-    smallcheck >= 1.1.5 && ^>= 1.2,
+    QuickCheck >= 2.14.2,
+    smallcheck >= 1.1.5,
 
   if !impl(ghc >=8.0)
     build-depends:
